@@ -21,8 +21,10 @@ jobs:
     - name: Install apigeecli
       run: |
         curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | sh
-        export PATH=$PATH:$HOME/.apigeecli/bin
+        echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH   
         apigeecli --help
+        - name: Install apigeecli
+         
     # ----------------------
     # 1. KVMs
     # ----------------------
