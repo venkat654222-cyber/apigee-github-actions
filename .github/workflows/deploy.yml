@@ -54,7 +54,7 @@ jobs:
 
     - name: Import & Deploy SharedFlow
       run: |
-        apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           --name SF-Security           --file sharedflows/SF-Security
+        apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           --file sharedflows/SF-Security
 
         apigeecli sharedflows deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name SF-Security
 
@@ -63,6 +63,6 @@ jobs:
     # ----------------------
     - name: Import & Deploy API Proxy
       run: |
-        apigeecli apis import           --org ${{ secrets.APIGEE_ORG }}           --name helloworld           --file proxies/helloworld           --action create
+        apigeecli apis import           --org ${{ secrets.APIGEE_ORG }}           --name hello-world           --file proxies/hello-world           --action create
 
-        apigeecli apis deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name helloworld
+        apigeecli apis deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name hello-world
