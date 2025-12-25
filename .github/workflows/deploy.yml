@@ -51,7 +51,10 @@ jobs:
     - name: Verify Apigee access
       run: |
         apigeecli organizations list
-
+    - name: List sharedflows folder
+      run: |
+        echo "Current working directory: $(pwd)"
+        ls -l sharedflows/
     - name: Import & Deploy All SharedFlows
       run: |
         for sf in sharedflows/*; do
