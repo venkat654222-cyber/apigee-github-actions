@@ -54,9 +54,10 @@ jobs:
 
     - name: Import & Deploy SharedFlow
       run: |
-        apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           -f sharedflows/SF-Security --override
+        apigeecli sharedflows create bundle   --org ${{ secrets.APIGEE_ORG }}   --env ${{ secrets.APIGEE_ENV }}  --name "SF-Security"  -p sharedflows/SF-Security   --ovr --wait   --token $TOKEN
+        # apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           -f sharedflows/SF-Security -r
 
-        apigeecli sharedflows deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name SF-Security
+        # apigeecli sharedflows deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name SF-Security
 
     # ----------------------
     # 3. API Proxy
