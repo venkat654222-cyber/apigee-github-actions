@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<SharedFlowBundle revision="1" name="SF-Security">
+<SharedFlowBundle revision="2" name="SF-Security">
   <DisplayName/>
   <Description>Security policies</Description>
-  <CreatedAt>1766679116918</CreatedAt>
-  <LastModifiedAt>1766679116918</LastModifiedAt>
+  <CreatedAt>1766683755015</CreatedAt>
+  <LastModifiedAt>1766684010125</LastModifiedAt>
+  <Policies>
+    <Policy>AM-PrintUserDetails</Policy>
+  </Policies>
   <SharedFlows>
     <SharedFlow>default</SharedFlow>
   </SharedFlows>

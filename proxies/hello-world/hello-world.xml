@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<APIProxy revision="2" name="hello-world">
+<APIProxy revision="3" name="hello-world">
   <DisplayName>Hello World</DisplayName>
   <Description>An example API proxy.</Description>
-  <CreatedAt>1766679000240</CreatedAt>
-  <LastModifiedAt>1766679000240</LastModifiedAt>
+  <CreatedAt>1766684086019</CreatedAt>
+  <LastModifiedAt>1766684086019</LastModifiedAt>
   <BasePaths>/hello-world</BasePaths>
   <Policies>
     <Policy>FC-ValidateCredentails</Policy>
