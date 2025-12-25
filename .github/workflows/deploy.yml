@@ -55,40 +55,15 @@ jobs:
       run: |
         echo "Current working directory: $(pwd)"
         ls -l sharedflows/
-    - name: Import & Deploy All SharedFlows
+    - name: Deploy Shared Flow
       run: |
-        echo "Current working directory: $(pwd)"
-        echo "Listing folders for shared flows:"
-        ls -l
-  
-        # Determine path for shared flows
-        if [ -d "sharedflows" ]; then
-        SF_PATH="sharedflows/*"
-        else
-          SF_PATH="*"
-          fi
-  
-        # Loop through each folder and deploy
-         for sf in $SF_PATH; do
-            if [ -d "$sf/sharedflowbundle" ]; then
-              SF_NAME=$(basename "$sf")
-              echo "Deploying shared flow: $SF_NAME"
-  
-              # Import shared flow
-              apigeecli sharedflows import \
-                --org ${{ secrets.APIGEE_ORG }} \
-                --folder "$sf/sharedflowbundle" \
-                
-  
-              # Deploy shared flow
-              apigeecli sharedflows deploy \
-                --org ${{ secrets.APIGEE_ORG }} \
-                --env ${{ secrets.APIGEE_ENV }} \
-                --name "$SF_NAME"
-            else
-              echo "Skipping $sf – no sharedflowbundle found"
-            fi
-          done 
+        apigeecli sharedflows bundle \
+            --name SF-Security \
+            --folder "$sf/sharedflowbundle" \
+            --org ${{ secrets.APIGEE_ORG }} \
+            --env <YOUR_ENV_NAME> \
+            --token ${{ steps.auth.outputs.access_token }} \
+            --ovr --wait
     #- name: Import & Deploy SharedFlow
     #  run: |
     #    apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           --folder sharedflows/SF-Security  
