@@ -54,24 +54,24 @@ jobs:
 
     - name: Import & Deploy All SharedFlows
       run: |
-          for sf in sharedflows/*; do
-            if [ -d "$sf/sharedflowbundle" ]; then
-              SF_NAME=$(basename "$sf")
-              echo "Deploying shared flow: $SF_NAME"
+        for sf in sharedflows/*; do
+        if [ -d "$sf/sharedflowbundle" ]; then
+        SF_NAME=$(basename "$sf")
+        echo "Deploying shared flow: $SF_NAME"
       
-              # Import shared flow
-              apigeecli sharedflows import \
-                --org ${{ secrets.APIGEE_ORG }} \
-                --folder "$sf/sharedflowbundle" \
-                --replace
+        # Import shared flow
+        apigeecli sharedflows import \
+        --org ${{ secrets.APIGEE_ORG }} \
+        --folder "$sf/sharedflowbundle" \
+        --replace
       
-              # Deploy shared flow
-              apigeecli sharedflows deploy \
-                --org ${{ secrets.APIGEE_ORG }} \
-                --env ${{ secrets.APIGEE_ENV }} \
-                --name "$SF_NAME"
-            fi
-          done    
+        # Deploy shared flow
+        apigeecli sharedflows deploy \
+        --org ${{ secrets.APIGEE_ORG }} \
+        --env ${{ secrets.APIGEE_ENV }} \
+        --name "$SF_NAME"
+        fi
+        done    
     #- name: Import & Deploy SharedFlow
     #  run: |
     #    apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           --folder sharedflows/SF-Security  
