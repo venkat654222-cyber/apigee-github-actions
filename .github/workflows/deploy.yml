@@ -58,7 +58,7 @@ jobs:
     - name: Deploy Shared Flow
       run: |
         apigeecli sharedflows bundle \
-            --name SF-Security \
+            -n SF-Security \
             --folder "$sf/sharedflowbundle" \
             --org ${{ secrets.APIGEE_ORG }} \
             --env ${{ secrets.APIGEE_ENV }}
