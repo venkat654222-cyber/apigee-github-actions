@@ -40,15 +40,15 @@ jobs:
     # ----------------------
     # 2. SharedFlows
     # ----------------------
-      - name: Verify Apigee access
-        run: |
-          apigeecli organizations list
+    - name: Verify Apigee access
+      run: |
+        apigeecli organizations list
 
-      - name: Import & Deploy SharedFlow
-        run: |
-          apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           --name SF-Security           --file sharedflows/SF-Security
+    - name: Import & Deploy SharedFlow
+      run: |
+        apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           --name SF-Security           --file sharedflows/SF-Security
 
-          apigeecli sharedflows deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name SF-Security
+        apigeecli sharedflows deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name SF-Security
 
     # ----------------------
     # 3. API Proxy
