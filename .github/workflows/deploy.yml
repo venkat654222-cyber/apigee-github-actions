@@ -17,11 +17,13 @@ jobs:
       with:
         credentials_json: ${{ secrets.GCP_APIGEE_SA_KEY }}
 
-    - name: Install Apigee CLI
+
+    - name: Install apigeecli
       run: |
         curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | sh
-        sudo mv apigeecli /usr/local/bin
-
+        export PATH=$PATH:$HOME/.apigeecli/bin
+        apigeecli version
+      
     # ----------------------
     # 1. KVMs
     # ----------------------
