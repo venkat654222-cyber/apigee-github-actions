@@ -59,7 +59,7 @@ jobs:
         apigeecli sharedflows deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name SF-Security
 
     # ----------------------
-    # 3. API Proxy
+    # 3. API Proxies
     # ----------------------
     - name: Import & Deploy API Proxy
       run: |
