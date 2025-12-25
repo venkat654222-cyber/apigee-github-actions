@@ -1,0 +1,55 @@
+name: Apigee X CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Authenticate to GCP
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Install Apigee CLI
+      run: |
+        curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | sh
+        sudo mv apigeecli /usr/local/bin
+
+    # ----------------------
+    # 1. KVMs
+    # ----------------------
+    - name: Create / Update KVMs
+      run: |
+        KVM_NAME=$(jq -r '.name' configs/dev/kvms.json)
+
+        apigeecli kvms create           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name $KVM_NAME || true
+
+        jq -r '.entries | to_entries[] | "\(.key)=\(.value)"' configs/dev/kvms.json |
+        while IFS='=' read key value; do
+          apigeecli kvms entries create             --org ${{ secrets.APIGEE_ORG }}             --env ${{ secrets.APIGEE_ENV }}             --kvm $KVM_NAME             --name "$key"             --value "$value" || true
+        done
+
+    # ----------------------
+    # 2. SharedFlows
+    # ----------------------
+    - name: Import & Deploy SharedFlow
+      run: |
+        apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           --name common-security           --file sharedflows/common-security
+
+        apigeecli sharedflows deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name common-security
+
+    # ----------------------
+    # 3. API Proxy
+    # ----------------------
+    - name: Import & Deploy API Proxy
+      run: |
+        apigeecli apis import           --org ${{ secrets.APIGEE_ORG }}           --name helloworld           --file proxies/helloworld           --action create
+
+        apigeecli apis deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name helloworld
