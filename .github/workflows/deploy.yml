@@ -78,7 +78,7 @@ jobs:
               apigeecli sharedflows import \
                 --org ${{ secrets.APIGEE_ORG }} \
                 --folder "$sf/sharedflowbundle" \
-                --replace
+                
   
               # Deploy shared flow
               apigeecli sharedflows deploy \
