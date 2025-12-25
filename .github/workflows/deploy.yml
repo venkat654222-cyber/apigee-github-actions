@@ -26,25 +26,25 @@ jobs:
     # ----------------------
     # 1. KVMs
     # ----------------------
-    - name: Create / Update KVMs
-      run: |
-        KVM_NAME=$(jq -r '.name' configs/dev/kvms.json)
+    #- name: Create / Update KVMs
+    #  run: |
+    #    KVM_NAME=$(jq -r '.name' configs/dev/kvms.json)
 
-        apigeecli kvms create           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name $KVM_NAME || true
+     #   apigeecli kvms create           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name $KVM_NAME || true
 
-        jq -r '.entries | to_entries[] | "\(.key)=\(.value)"' configs/dev/kvms.json |
-        while IFS='=' read key value; do
-          apigeecli kvms entries create             --org ${{ secrets.APIGEE_ORG }}             --env ${{ secrets.APIGEE_ENV }}             --kvm $KVM_NAME             --name "$key"             --value "$value" || true
-        done
+      #  jq -r '.entries | to_entries[] | "\(.key)=\(.value)"' configs/dev/kvms.json |
+       # while IFS='=' read key value; do
+        #  apigeecli kvms entries create             --org ${{ secrets.APIGEE_ORG }}             --env ${{ secrets.APIGEE_ENV }}             --kvm $KVM_NAME             --name "$key"             --value "$value" || true
+        #done
 
     # ----------------------
     # 2. SharedFlows
     # ----------------------
     - name: Import & Deploy SharedFlow
       run: |
-        apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           --name common-security           --file sharedflows/common-security
+        apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           --name SF-Security           --file sharedflows/SF-Security
 
-        apigeecli sharedflows deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name common-security
+        apigeecli sharedflows deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name SF-Security
 
     # ----------------------
     # 3. API Proxy
