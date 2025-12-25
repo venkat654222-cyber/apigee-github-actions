@@ -61,7 +61,7 @@ jobs:
             --name SF-Security \
             --folder "$sf/sharedflowbundle" \
             --org ${{ secrets.APIGEE_ORG }} \
-            --env <YOUR_ENV_NAME> \
+            --env ${{ secrets.APIGEE_ENV }}
             --token ${{ steps.auth.outputs.access_token }} \
             --ovr --wait
     #- name: Import & Deploy SharedFlow
