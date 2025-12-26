@@ -30,7 +30,14 @@ jobs:
         run: |
           which apigeecli
           apigeecli --help
-
+      - name: Check for changed proxies
+        id: check_changes
+        run: |
+          # Get the list of modified directories (only those in the 'proxies/' folder)
+          modified_proxies=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E '^proxies/.*' | cut -d'/' -f2 | sort | uniq)
+          echo "Modified proxies: $modified_proxies"
+          echo "modified_proxies=$modified_proxies" >> $GITHUB_ENV
+      
       # 5️⃣ Prepare and Import Apigee Proxy ZIPs for all proxies
       - name: Prepare and Import Apigee Proxy ZIPs
         run: |
