@@ -73,8 +73,25 @@ jobs:
     # ----------------------
     # 3. API Proxies
     # ----------------------
-    - name: Import & Deploy API Proxy
-      run: |
-        apigeecli apis import           --org ${{ secrets.APIGEE_ORG }}                    -f proxies/hello-world          --default-token
+    #- name: Import & Deploy API Proxy
+    #  run: |
+    #    apigeecli apis import           --org ${{ secrets.APIGEE_ORG }}                    -f proxies/hello-world          --default-token
 
-        apigeecli apis deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name hello-world
+     #   apigeecli apis deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name hello-world
+    - name: Import & Deploy API Proxy (latest revision)
+      run: |
+        apigeecli apis import \
+            --org ${{ secrets.APIGEE_ORG }} \
+            -f proxies/hello-world/apiproxy \
+            --default-token
+      
+          LATEST_REV=$(apigeecli apis list-revisions \
+            --org ${{ secrets.APIGEE_ORG }} \
+            --name hello-world | tail -n 1)
+      
+          echo "Deploying revision $LATEST_REV"
+      
+          curl -X POST \
+            -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+            "https://apigee.googleapis.com/v1/organizations/${{ secrets.APIGEE_ORG }}/environments/${{ secrets.APIGEE_ENV }}/apis/hello-world/revisions/$LATEST_REV/deployments?override=true"
+      
