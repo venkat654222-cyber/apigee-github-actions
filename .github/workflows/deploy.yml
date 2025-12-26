@@ -20,12 +20,13 @@ jobs:
       - name: Download and install apigeecli v2.16.0
         run: |
           curl -L \
-            https://github.com/apigee/apigeecli/releases/download/v2.16.0/apigeecli_v2.16.0_Linux_x86_64.zip \
-            -o apigeecli.zip
-          unzip apigeecli.zip
-          chmod +x apigeecli
-          sudo mv apigeecli /usr/local/bin/
-          apigeecli version
+           https://github.com/apigee/apigeecli/releases/download/v2.16.0/apigeecli_v2.16.0_Linux_x86_64.zip \
+           -o apigeecli.zip
+           unzip apigeecli.zip
+           chmod +x apigeecli_v2.16.0_Linux_x86_64/apigeecli
+           sudo mv apigeecli_v2.16.0_Linux_x86_64/apigeecli /usr/local/bin/
+           apigeecli version
+
 
       - name: Zip API Proxy
         run: |
