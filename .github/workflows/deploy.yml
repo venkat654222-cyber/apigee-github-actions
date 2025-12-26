@@ -85,7 +85,7 @@ jobs:
         ls -l
     - name: Import & Deploy API Proxy (latest revision)
       run: |
-        apigeecli apis import --org ${{ secrets.APIGEE_ORG }} -f proxies/hello-world.zip --default-token
+        apigeecli apis import --org ${{ secrets.APIGEE_ORG }} -f proxies/hello-world --default-token
       
         #LATEST_REV=$(apigeecli apis revisions list --org ${{ secrets.APIGEE_ORG }} --name hello-world | tail -n 1)
       
