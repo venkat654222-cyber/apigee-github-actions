@@ -9,29 +9,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout the repo
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 2️⃣ Authenticate to GCP
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_APIGEE_SA_KEY }}
 
+      # 3️⃣ Install apigeecli
       - name: Install apigeecli
         run: |
           curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | sh
           echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
+
+      # 4️⃣ Verify apigeecli (runs in separate step so $GITHUB_PATH is effective)
+      - name: Verify apigeecli
+        run: |
+          which apigeecli
           apigeecli version
 
+      # 5️⃣ Prepare Apigee Proxy ZIP
       - name: Prepare Apigee Proxy ZIP
         run: |
-          # Move into proxy folder and zip apiproxy
           cd proxies/hello-world
           zip -r ../../hello-world.zip apiproxy
           cd ../..
           mkdir -p apigee-bundles
           mv hello-world.zip apigee-bundles/
 
+      # 6️⃣ Import Apigee Proxy
       - name: Import Apigee Proxy
         run: |
           apigeecli apis import \
@@ -39,6 +48,7 @@ jobs:
             --org ${{ secrets.APIGEE_ORG }} \
             --default-token
 
+      # 7️⃣ Verify import
       - name: Verify Import
         run: |
           echo "Listing APIs in org..."
@@ -46,6 +56,7 @@ jobs:
           echo "Listing revisions for hello-world..."
           apigeecli apis revisions list --org ${{ secrets.APIGEE_ORG }} --name hello-world
 
+      # 8️⃣ Deploy latest revision
       - name: Deploy latest revision
         run: |
           LATEST_REV=$(apigeecli apis revisions list --org ${{ secrets.APIGEE_ORG }} --name hello-world | tail -n 1)
