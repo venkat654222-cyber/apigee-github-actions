@@ -14,10 +14,10 @@
   </Copy>
   <Remove>
     <Headers>
-      <Header name="rev4"/>
+      <Header name="rev4old"/>
     </Headers>
     <QueryParams>
-      <QueryParam name="q1"/>
+      <QueryParam name="rev4"/>
     </QueryParams>
     <FormParams>
       <FormParam name="f1"/>
