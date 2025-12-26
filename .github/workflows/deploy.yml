@@ -1,14 +1,75 @@
-0s
-Run mkdir -p apigee-bundles
-Processing API proxy: hello-world
-  adding: apiproxy/ (stored 0%)
-  adding: apiproxy/policies/ (stored 0%)
-  adding: apiproxy/policies/AM-PrintUserDetails.xml (deflated 59%)
-  adding: apiproxy/hello-world.xml (deflated 50%)
-  adding: apiproxy/targets/ (stored 0%)
-  adding: apiproxy/targets/default.xml (deflated 45%)
-  adding: apiproxy/proxies/ (stored 0%)
-  adding: apiproxy/proxies/default.xml (deflated 51%)
-Importing hello-world ...
-Error: supplied path is not a folder
-Error: Process completed with exit code 1.
+name: Apigee X CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout the repo
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2️⃣ Authenticate to GCP
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_APIGEE_SA_KEY }}
+
+      # 3️⃣ Install apigeecli
+      - name: Install apigeecli
+        run: |
+          curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | sh
+          echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
+
+      # 4️⃣ Verify apigeecli (runs in separate step so $GITHUB_PATH is effective)
+      - name: Verify apigeecli
+        run: |
+          which apigeecli
+          apigeecli --help
+
+      # 5️⃣ Prepare and Import Apigee Proxy ZIPs
+      - name: Prepare and Import Apigee Proxy ZIPs
+        run: |
+          mkdir -p apigee-bundles
+
+          # Loop through all proxies, zip and import each API proxy
+          for api in proxies/*; do
+            if [ -d "$api/apiproxy" ]; then
+              api_name=$(basename $api)
+              echo "Processing API proxy: $api_name"
+              
+              # Zip the API proxy into apigee-bundles folder
+              zip_file="apigee-bundles/${api_name}.zip"
+              cd "$api"
+              zip -r "../../$zip_file" apiproxy  # Ensure apiproxy is correctly zipped
+              cd ../..
+
+              # Import the zip file directly
+              echo "Importing $api_name ..."
+              apigeecli apis import \
+                -f "$zip_file" \
+                --org ${{ secrets.APIGEE_ORG }} \
+                --default-token
+            fi
+          done
+
+      # 6️⃣ Deploy latest revision for all proxies
+      - name: Deploy latest revision
+        run: |
+          # Loop through each proxy in apigee-bundles and deploy
+          for api in proxies/*; do
+            if [ -d "$api/apiproxy" ]; then
+              api_name=$(basename $api)
+              echo "Deploying $api_name ..."
+              apigeecli apis deploy \
+                --org ${{ secrets.APIGEE_ORG }} \
+                --env ${{ secrets.APIGEE_ENV }} \
+                --name "$api_name" \
+                --ovr \
+                --default-token
+            fi
+          done
