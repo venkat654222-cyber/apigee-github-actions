@@ -48,10 +48,14 @@ jobs:
               zip -r "../../$zip_file" apiproxy  # Ensure apiproxy is correctly zipped
               cd ../..
 
+              # Check if the ZIP file is created
+              echo "Listing contents of apigee-bundles:"
+              ls -l apigee-bundles
+
               # Import the zip file directly
               echo "Importing $api_name ..."
               apigeecli apis import \
-                -f "$zip_file" \
+                -f "$(pwd)/$zip_file" \
                 --org ${{ secrets.APIGEE_ORG }} \
                 --default-token
             fi
