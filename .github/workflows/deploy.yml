@@ -87,8 +87,14 @@ jobs:
       run: |
         ls -l proxies/hello-world
         ls -l proxies/hello-world/apiproxy
+
+    - name: Zip Apigee Proxy
+      run: |
+        cd proxies/hello-world
+        zip -r hello-world.zip apiproxy    
+        
     - name: Import Apigee API Proxy
       run: |
-        apigeecli apis import --org ${{ secrets.APIGEE_ORG }} -f proxies/hello-world/apiproxy --default-token
+        apigeecli apis import --org ${{ secrets.APIGEE_ORG }} -f proxies/hello-world/hello-world.zip --default-token
   
     
