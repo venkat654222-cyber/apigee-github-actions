@@ -32,7 +32,7 @@ jobs:
           apigeecli --help
 
       # 5️⃣ Prepare Apigee Proxy ZIPs for all APIs
-      - name: Prepare and Import Apigee Proxy ZIPs
+      - name: Prepare and Import Apigee Proxy Folders
         run: |
           mkdir -p apigee-bundles
 
@@ -42,16 +42,16 @@ jobs:
               api_name=$(basename $api)
               echo "Processing API proxy: $api_name"
               
-              # Zip the API proxy into apigee-bundles folder
+              # Zip the API proxy into apigee-bundles folder (you can remove this if not required)
               zip_file="apigee-bundles/${api_name}.zip"
               cd "$api"
               zip -r "../../$zip_file" apiproxy
               cd ../..
 
-              # Import the zip file directly
+              # Directly import the apiproxy folder instead of the zip file
               echo "Importing $api_name ..."
               apigeecli apis import \
-                -f "$zip_file" \
+                -f "$api/apiproxy" \
                 --org ${{ secrets.APIGEE_ORG }} \
                 --default-token
             fi
