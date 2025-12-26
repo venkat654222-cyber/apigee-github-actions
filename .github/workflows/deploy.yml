@@ -36,7 +36,13 @@ jobs:
         run: |
           git fetch --prune --unshallow
 
-      # 6️⃣ Check for changes in proxy folders (and get modified proxies)
+      # 6️⃣ Debug Git Diff
+      - name: Debug git diff output
+        run: |
+          # Check the git diff between current commit (HEAD) and the previous commit (origin/main)
+          git diff --name-only origin/main...HEAD
+          
+      # 7️⃣ Check for changes in proxy folders (and get modified proxies)
       - name: Check for changed proxies
         id: check_changes
         run: |
@@ -49,7 +55,7 @@ jobs:
           # Save the modified proxies list to GitHub environment for later steps
           echo "modified_proxies=$modified_proxies" >> $GITHUB_ENV
 
-      # 7️⃣ Prepare and Import Apigee Proxy ZIPs for the modified proxies
+      # 8️⃣ Prepare and Import Apigee Proxy ZIPs for the modified proxies
       - name: Prepare and Import Apigee Proxy ZIPs
         run: |
           mkdir -p apigee-bundles
@@ -78,7 +84,7 @@ jobs:
             fi
           done
 
-      # 8️⃣ Deploy latest revision for the modified proxies
+      # 9️⃣ Deploy latest revision for the modified proxies
       - name: Deploy latest revision for modified proxies
         run: |
           # Loop through each modified proxy and deploy
