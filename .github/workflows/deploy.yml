@@ -97,6 +97,9 @@ jobs:
       run: |
         ls -l proxies/hello-world  # sanity check
         apigeecli apis import --org ${{ secrets.APIGEE_ORG }} -f proxies/hello-world/apiproxy   --default-token
+    - name: Import Apigee Proxy
+      run: |
+        apigeecli apis list --org ${{ secrets.APIGEE_ORG }}     
     
   
     
