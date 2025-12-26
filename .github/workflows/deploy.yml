@@ -87,7 +87,7 @@ jobs:
    
     - name: Import Apigee Proxy
       run: |
-        apigeecli version
+       
         apigeecli apis import -f proxies/hello-world/apiproxy --org $APIGEE_ORG --default-token
     
     - name: Verify Import
