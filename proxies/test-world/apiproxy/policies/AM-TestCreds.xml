@@ -14,7 +14,7 @@
   </Copy>
   <Remove>
     <Headers>
-      <Header name="test-header-change"/>
+      <Header name="test-header-change-done"/>
     </Headers>
     <QueryParams>
       <QueryParam name="q1"/>
