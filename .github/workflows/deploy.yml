@@ -1,8 +1,8 @@
-name: Apigee X CI/CD
+name: Apigee X CI/CD - Deploy Multiple APIs
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
   deploy:
@@ -31,39 +31,36 @@ jobs:
           which apigeecli
           apigeecli --help
 
-      # 5️⃣ Detect changed proxies
-      - name: Determine changed proxies
-        id: changed
-        run: |
-          # Detect folders changed under proxies/
-          echo "CHANGED_PROXIES=$(git diff --name-only ${{ github.sha }} ${{ github.event.before }} | grep '^proxies/' | cut -d/ -f2 | sort -u | tr '\n' ' ')" >> $GITHUB_ENV
-          echo "Changed proxies: $CHANGED_PROXIES"
-
-      # 6️⃣ Deploy only changed proxies
-      - name: Deploy changed proxies
+      # 5️⃣ Deploy all APIs in proxies/
+      - name: Deploy all API proxies
         run: |
           mkdir -p apigee-bundles
-          for proxy in $CHANGED_PROXIES; do
-            echo "Processing proxy: $proxy"
 
-            # Zip the proxy bundle
-            cd proxies/$proxy
-            zip -r ../../../apigee-bundles/$proxy.zip apiproxy
-            cd ../..
+          for api in proxies/*; do
+            if [ -d "$api/apiproxy" ]; then
+              api_name=$(basename $api)
+              echo "Processing API proxy: $api_name"
 
-            # Import the proxy
-            apigeecli apis import \
-              -f apigee-bundles/$proxy.zip \
-              --org ${{ secrets.APIGEE_ORG }} \
-              --default-token
+              # Zip the API proxy
+              zip_file="apigee-bundles/${api_name}.zip"
+              cd "$api"
+              zip -r "../../$zip_file" apiproxy
+              cd ../..
 
-            # Deploy the latest revision
-            apigeecli apis deploy \
-              --org ${{ secrets.APIGEE_ORG }} \
-              --env ${{ secrets.APIGEE_ENV }} \
-              --name $proxy \
-              --ovr \
-              --default-token
+              # Import the API proxy
+              echo "Importing $api_name ..."
+              apigeecli apis import \
+                -f "$zip_file" \
+                --org ${{ secrets.APIGEE_ORG }} \
+                --default-token
 
-            echo "Deployment complete for proxy: $proxy"
+              # Deploy the latest revision
+              echo "Deploying $api_name ..."
+              apigeecli apis deploy \
+                --org ${{ secrets.APIGEE_ORG }} \
+                --env ${{ secrets.APIGEE_ENV }} \
+                --name "$api_name" \
+                --ovr \
+                --default-token
+            fi
           done
