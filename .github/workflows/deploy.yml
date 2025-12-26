@@ -62,5 +62,6 @@ jobs:
             --org ${{ secrets.APIGEE_ORG }} \
             --env ${{ secrets.APIGEE_ENV }} \
             --name hello-world \
-            --default-token
-            --override
+            --ovr \
+            --default-token 
+            
