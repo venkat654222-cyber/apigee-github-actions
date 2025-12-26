@@ -9,33 +9,50 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Authenticate to GCP
-      uses: google-github-actions/auth@v2
-      with:
-        credentials_json: ${{ secrets.GCP_APIGEE_SA_KEY }}
- 
-    
-    - name: Install apigeecli
-      run: |
-        curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | sh
-        echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_APIGEE_SA_KEY }}
 
-    - name: Verify apigeecli
-      run: |
-        which apigeecli
-        apigeecli --help
-   
-   
-    - name: Import Apigee Proxy
-      run: |
-        apigeecli apis import -f proxies/hello-world/apiproxy --org  ${{ secrets.APIGEE_ORG }} --default-token
-    
-    - name: Verify Import
-      run: |
-        echo "Listing APIs in org..."
-        apigeecli apis list --org ${{ secrets.APIGEE_ORG }}
-        echo "Listing revisions for hello-world..."
-        apigeecli apis revisions list --org ${{ secrets.APIGEE_ORG }} --name hello-world
+      - name: Install apigeecli
+        run: |
+          curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | sh
+          echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
+          apigeecli version
+
+      - name: Prepare Apigee Proxy ZIP
+        run: |
+          # Move into proxy folder and zip apiproxy
+          cd proxies/hello-world
+          zip -r ../../hello-world.zip apiproxy
+          cd ../..
+          mkdir -p apigee-bundles
+          mv hello-world.zip apigee-bundles/
+
+      - name: Import Apigee Proxy
+        run: |
+          apigeecli apis import \
+            -f apigee-bundles \
+            --org ${{ secrets.APIGEE_ORG }} \
+            --default-token
+
+      - name: Verify Import
+        run: |
+          echo "Listing APIs in org..."
+          apigeecli apis list --org ${{ secrets.APIGEE_ORG }}
+          echo "Listing revisions for hello-world..."
+          apigeecli apis revisions list --org ${{ secrets.APIGEE_ORG }} --name hello-world
+
+      - name: Deploy latest revision
+        run: |
+          LATEST_REV=$(apigeecli apis revisions list --org ${{ secrets.APIGEE_ORG }} --name hello-world | tail -n 1)
+          echo "Deploying revision $LATEST_REV..."
+          apigeecli apis deploy \
+            --org ${{ secrets.APIGEE_ORG }} \
+            --env ${{ secrets.APIGEE_ENV }} \
+            --name hello-world \
+            --rev $LATEST_REV \
+            --default-token
