@@ -52,7 +52,7 @@ jobs:
               if [ -f "$zip_file" ]; then
                 echo "Importing $api_name ..."
                 apigeecli apis import \
-                  -f "${GITHUB_WORKSPACE}/$zip_file" \
+                  -f "${GITHUB_WORKSPACE}/apigee-bundles" \
                   --org ${{ secrets.APIGEE_ORG }} \
                   --default-token
               else
