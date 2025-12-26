@@ -88,7 +88,7 @@ jobs:
     - name: Import Apigee Proxy
       run: |
        
-        apigeecli apis import -f proxies/hello-world/apiproxy --org $APIGEE_ORG --default-token
+        apigeecli apis import -f proxies/hello-world/apiproxy --org  ${{ secrets.APIGEE_ORG }} --default-token
     
     - name: Verify Import
       run: |
