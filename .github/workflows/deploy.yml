@@ -1,34 +1,103 @@
-name: Deploy Apigee Proxy
+name: Apigee X CI/CD
 
 on:
   push:
-    branches:
-      - main  # Change to your branch
+    branches: [ "main" ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    env:
-      APIGEE_ORG: ${{ secrets.APIGEE_ORG }}
-      APIGEE_ENV: ${{ secrets.APIGEE_ENV }}
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Download and install apigeecli v2.16.0
-        run: |
-          curl -L \
-           https://github.com/apigee/apigeecli/releases/download/v2.16.0/apigeecli_v2.16.0_Linux_x86_64.zip \
-           -o apigeecli.zip
-           unzip apigeecli.zip
-           chmod +x apigeecli_v2.16.0_Linux_x86_64/apigeecli
-           sudo mv apigeecli_v2.16.0_Linux_x86_64/apigeecli /usr/local/bin/
-           apigeecli version
+    - name: Authenticate to GCP
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_APIGEE_SA_KEY }}
 
 
-      - name: Zip API Proxy
-        run: |
-          cd proxies/hello-world
-          zip -r hello-world.zi
+   
+    
+    - name: Install apigeecli
+      run: |
+        curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | sh
+        echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
+
+    - name: Verify apigeecli
+      run: |
+        which apigeecli
+        apigeecli --help
+          
+          
+    # ----------------------
+    # 1. KVMs
+    # ----------------------
+    #- name: Create / Update KVMs
+    #  run: |
+    #    KVM_NAME=$(jq -r '.name' configs/dev/kvms.json)
+
+     #   apigeecli kvms create           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name $KVM_NAME || true
+
+      #  jq -r '.entries | to_entries[] | "\(.key)=\(.value)"' configs/dev/kvms.json |
+       # while IFS='=' read key value; do
+        #  apigeecli kvms entries create             --org ${{ secrets.APIGEE_ORG }}             --env ${{ secrets.APIGEE_ENV }}             --kvm $KVM_NAME             --name "$key"             --value "$value" || true
+        #done
+
+    # ----------------------
+    # 2. SharedFlows
+    # ----------------------
+    - name: Verify Apigee access
+      run: |
+        apigeecli organizations list
+    - name: List sharedflows folder
+      run: |
+        echo "Current working directory: $(pwd)"
+        ls -l sharedflows/
+    #- name: Deploy Shared Flow
+    #  run: |
+    #    apigeecli sharedflows bundle \
+    #        -n SF-Security \
+    #        --folder "$sf/sharedflowbundle" \
+    #        --org ${{ secrets.APIGEE_ORG }} \
+    #        --env ${{ secrets.APIGEE_ENV }}
+    #        --token ${{ steps.auth.outputs.access_token }} \
+    #        --ovr --wait
+    #- name: Import & Deploy SharedFlow
+    #  run: |
+    #    apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           --folder sharedflows/SF-Security  
+
+     #   apigeecli sharedflows deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name SF-Security
+
+    # ----------------------
+    # 3. API Proxies
+    # ----------------------
+    #- name: Import & Deploy API Proxy
+    #  run: |
+    #    apigeecli apis import           --org ${{ secrets.APIGEE_ORG }}                    -f proxies/hello-world          --default-token
+
+     #   apigeecli apis deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name hello-world
+    #- name: Zip Apigee API Proxy
+    #  run: |
+    #    cd proxies/
+    #    zip -r hello-world.zip hello-world
+    #    ls -l- 
+    - name: Verify Apigee proxy structure
+      run: |
+        ls -l proxies/hello-world
+        ls -l proxies/hello-world/apiproxy
+
+    #- name: Zip Apigee Proxy
+    #  run: |
+    #    cd proxies/hello-world
+    #    #zip -r hello-world.zip apiproxy    
+
+  #  - name: Import Apigee Proxy
+  #    run: |
+  #      ls -l proxies/hello-world  # sanity check
+  #      apigeecli apis import --org ${{ secrets.APIGEE_ORG }} -f proxies/hello-world/apiproxy   --default-token
+    
+    - name: Import Apigee Proxy list
+      run: |
+        apigeecli apis import --help     
