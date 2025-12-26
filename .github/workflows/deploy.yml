@@ -55,15 +55,15 @@ jobs:
       run: |
         echo "Current working directory: $(pwd)"
         ls -l sharedflows/
-    - name: Deploy Shared Flow
-      run: |
-        apigeecli sharedflows bundle \
-            -n SF-Security \
-            --folder "$sf/sharedflowbundle" \
-            --org ${{ secrets.APIGEE_ORG }} \
-            --env ${{ secrets.APIGEE_ENV }}
-            --token ${{ steps.auth.outputs.access_token }} \
-            --ovr --wait
+    #- name: Deploy Shared Flow
+    #  run: |
+    #    apigeecli sharedflows bundle \
+    #        -n SF-Security \
+    #        --folder "$sf/sharedflowbundle" \
+    #        --org ${{ secrets.APIGEE_ORG }} \
+    #        --env ${{ secrets.APIGEE_ENV }}
+    #        --token ${{ steps.auth.outputs.access_token }} \
+    #        --ovr --wait
     #- name: Import & Deploy SharedFlow
     #  run: |
     #    apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           --folder sharedflows/SF-Security  

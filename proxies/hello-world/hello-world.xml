@@ -3,10 +3,10 @@
   <DisplayName>Hello World</DisplayName>
   <Description>An example API proxy.</Description>
   <CreatedAt>1766684086019</CreatedAt>
-  <LastModifiedAt>1766684086019</LastModifiedAt>
+  <LastModifiedAt>1766711793587</LastModifiedAt>
   <BasePaths>/hello-world</BasePaths>
   <Policies>
-    <Policy>FC-ValidateCredentails</Policy>
+    <Policy>AM-PrintUserDetails</Policy>
   </Policies>
   <ProxyEndpoints>
     <ProxyEndpoint>default</ProxyEndpoint>

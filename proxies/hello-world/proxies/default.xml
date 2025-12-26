@@ -2,9 +2,6 @@
 <ProxyEndpoint name="default">
   <PreFlow name="PreFlow">
     <Request>
-      <Step>
-        <Name>FC-ValidateCredentails</Name>
-      </Step>
     </Request>
     <Response/>
   </PreFlow>
