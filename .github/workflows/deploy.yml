@@ -16,9 +16,7 @@ jobs:
       uses: google-github-actions/auth@v2
       with:
         credentials_json: ${{ secrets.GCP_APIGEE_SA_KEY }}
-
-
-   
+ 
     
     - name: Install apigeecli
       run: |
@@ -29,65 +27,10 @@ jobs:
       run: |
         which apigeecli
         apigeecli --help
-          
-          
-    # ----------------------
-    # 1. KVMs
-    # ----------------------
-    #- name: Create / Update KVMs
-    #  run: |
-    #    KVM_NAME=$(jq -r '.name' configs/dev/kvms.json)
-
-     #   apigeecli kvms create           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name $KVM_NAME || true
-
-      #  jq -r '.entries | to_entries[] | "\(.key)=\(.value)"' configs/dev/kvms.json |
-       # while IFS='=' read key value; do
-        #  apigeecli kvms entries create             --org ${{ secrets.APIGEE_ORG }}             --env ${{ secrets.APIGEE_ENV }}             --kvm $KVM_NAME             --name "$key"             --value "$value" || true
-        #done
-
-    # ----------------------
-    # 2. SharedFlows
-    # ----------------------
-    - name: Verify Apigee access
-      run: |
-        apigeecli organizations list
-    - name: List sharedflows folder
-      run: |
-        echo "Current working directory: $(pwd)"
-        ls -l sharedflows/
-    #- name: Deploy Shared Flow
-    #  run: |
-    #    apigeecli sharedflows bundle \
-    #        -n SF-Security \
-    #        --folder "$sf/sharedflowbundle" \
-    #        --org ${{ secrets.APIGEE_ORG }} \
-    #        --env ${{ secrets.APIGEE_ENV }}
-    #        --token ${{ steps.auth.outputs.access_token }} \
-    #        --ovr --wait
-    #- name: Import & Deploy SharedFlow
-    #  run: |
-    #    apigeecli sharedflows import           --org ${{ secrets.APIGEE_ORG }}           --folder sharedflows/SF-Security  
-
-     #   apigeecli sharedflows deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name SF-Security
-
-    # ----------------------
-    # 3. API Proxies
-    # ----------------------
-    #- name: Import & Deploy API Proxy
-    #  run: |
-    #    apigeecli apis import           --org ${{ secrets.APIGEE_ORG }}                    -f proxies/hello-world          --default-token
-
-     #   apigeecli apis deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name hello-world
-    - name: Zip Apigee API Proxy
-      run: |
-        cd proxies/hello-world
-        zip -r ../../hello-world.zip apiproxy
-        cd ../..
-        ls -l hello-world.zip
+   
    
     - name: Import Apigee Proxy
       run: |
-       
         apigeecli apis import -f proxies/hello-world/apiproxy --org  ${{ secrets.APIGEE_ORG }} --default-token
     
     - name: Verify Import
