@@ -89,7 +89,7 @@ jobs:
       
         #LATEST_REV=$(apigeecli apis revisions list --org ${{ secrets.APIGEE_ORG }} --name hello-world | tail -n 1)
       
-        echo "Deploying latest revisions "
+        echo "Deploying latest revision "
       
         apigeecli apis deploy  --org ${{ secrets.APIGEE_ORG }}  --env ${{ secrets.APIGEE_ENV }}    --name hello-world    --default-token
       
