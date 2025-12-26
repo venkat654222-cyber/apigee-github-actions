@@ -78,26 +78,26 @@ jobs:
     #    apigeecli apis import           --org ${{ secrets.APIGEE_ORG }}                    -f proxies/hello-world          --default-token
 
      #   apigeecli apis deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name hello-world
-    #- name: Zip Apigee API Proxy
-    #  run: |
-    #    cd proxies/
-    #    zip -r hello-world.zip hello-world
-    #    ls -l- 
+    - name: Zip Apigee API Proxy
+      run: |
+        cd proxies/
+        zip -r hello-world.zip hello-world
+        ls -lrt
     - name: Verify Apigee proxy structure
       run: |
+        ls -l proxies/
         ls -l proxies/hello-world
-        ls -l proxies/hello-world/apiproxy
 
-    #- name: Zip Apigee Proxy
-    #  run: |
-    #    cd proxies/hello-world
-    #    #zip -r hello-world.zip apiproxy    
+ 
 
     - name: Import Apigee Proxy
       run: |
         ls -l proxies/hello-world  # sanity check
-        apigeecli apis import  -f proxies/hello-world  --org ${{ secrets.APIGEE_ORG }} --default-token
+        apigeecli apis import  -f proxies/hello-world.zip  --org ${{ secrets.APIGEE_ORG }} --default-token
     
-    - name: Import Apigee Proxy list
+    - name: Verify Import
       run: |
-        apigeecli apis import --help     
+        echo "Listing APIs in org..."
+        apigeecli apis list --org ${{ secrets.APIGEE_ORG }}
+        echo "Listing revisions for hello-world..."
+        apigeecli apis revisions list --org ${{ secrets.APIGEE_ORG }} --name hello-world
