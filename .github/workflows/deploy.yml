@@ -31,43 +31,20 @@ jobs:
           which apigeecli
           apigeecli --help
 
-      # 5️⃣ Fetch full Git history (to compare changes correctly)
-      - name: Fetch full Git history
-        run: |
-          git fetch --prune --unshallow
-
-      # 6️⃣ Debug Git Diff
-      - name: Debug git diff output
-        run: |
-          # Check the git diff between current commit (HEAD) and the previous commit (origin/main)
-          git diff --name-only origin/main...HEAD
-          
-      # 7️⃣ Check for changes in proxy folders (and get modified proxies)
-      - name: Check for changed proxies
-        id: check_changes
-        run: |
-          # Get list of modified directories in 'proxies/' folder
-          modified_proxies=$(git diff --name-only origin/main...HEAD | grep -E '^proxies/.*' | cut -d'/' -f2 | sort | uniq)
-
-          # Output the list of modified proxies
-          echo "Modified proxies: $modified_proxies"
-          
-          # Save the modified proxies list to GitHub environment for later steps
-          echo "modified_proxies=$modified_proxies" >> $GITHUB_ENV
-
-      # 8️⃣ Prepare and Import Apigee Proxy ZIPs for the modified proxies
+      # 5️⃣ Prepare and Import Apigee Proxy ZIPs for all proxies
       - name: Prepare and Import Apigee Proxy ZIPs
         run: |
           mkdir -p apigee-bundles
-          
-          # Loop through the modified proxies and zip + import each one
-          for api_name in ${{ env.modified_proxies }}; do
-            echo "Processing modified API proxy: $api_name"
-            
-            if [ -d "proxies/$api_name/apiproxy" ]; then
+
+          # Loop through all proxies, zip and import each API proxy
+          for api in proxies/*; do
+            if [ -d "$api/apiproxy" ]; then
+              api_name=$(basename $api)
+              echo "Processing API proxy: $api_name"
+
               # Zip the API proxy into apigee-bundles folder
               zip_file="apigee-bundles/${api_name}.zip"
-              cd "proxies/$api_name"
+              cd "$api"
               zip -r "../../$zip_file" apiproxy
               cd ../..
 
@@ -84,16 +61,19 @@ jobs:
             fi
           done
 
-      # 9️⃣ Deploy latest revision for the modified proxies
-      - name: Deploy latest revision for modified proxies
+      # 6️⃣ Deploy latest revision for all proxies
+      - name: Deploy latest revision for all proxies
         run: |
-          # Loop through each modified proxy and deploy
-          for api_name in ${{ env.modified_proxies }}; do
-            echo "Deploying $api_name ..."
-            apigeecli apis deploy \
-              --org ${{ secrets.APIGEE_ORG }} \
-              --env ${{ secrets.APIGEE_ENV }} \
-              --name "$api_name" \
-              --ovr \
-              --default-token
+          # Loop through each proxy in apigee-bundles and deploy
+          for api in proxies/*; do
+            if [ -d "$api/apiproxy" ]; then
+              api_name=$(basename $api)
+              echo "Deploying $api_name ..."
+              apigeecli apis deploy \
+                --org ${{ secrets.APIGEE_ORG }} \
+                --env ${{ secrets.APIGEE_ENV }} \
+                --name "$api_name" \
+                --ovr \
+                --default-token
+            fi
           done
