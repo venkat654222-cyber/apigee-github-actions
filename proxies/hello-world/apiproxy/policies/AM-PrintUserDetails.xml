@@ -20,7 +20,7 @@
       <QueryParam name="retest"/>
     </QueryParams>
     <FormParams>
-      <FormParam name="f1"/>
+      <FormParam name="f1-cicd"/>
     </FormParams>
     <Payload> </Payload>
   </Remove>
