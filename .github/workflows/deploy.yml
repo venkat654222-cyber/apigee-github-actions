@@ -93,10 +93,10 @@ jobs:
     #    cd proxies/hello-world
     #    #zip -r hello-world.zip apiproxy    
 
-  #  - name: Import Apigee Proxy
-  #    run: |
-  #      ls -l proxies/hello-world  # sanity check
-  #      apigeecli apis import --org ${{ secrets.APIGEE_ORG }} -f proxies/hello-world/apiproxy   --default-token
+    - name: Import Apigee Proxy
+      run: |
+        ls -l proxies/hello-world  # sanity check
+        apigeecli apis import  -f proxies/hello-world  --default-token
     
     - name: Import Apigee Proxy list
       run: |
