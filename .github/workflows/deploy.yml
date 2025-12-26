@@ -30,7 +30,7 @@ jobs:
         run: |
           which apigeecli
           apigeecli --help
-      # 5️⃣ Fetch full Git history to make sure we can compare commits
+         # 5️⃣ Fetch full Git history
       - name: Fetch full Git history
         run: |
           git fetch --prune --unshallow
@@ -41,7 +41,11 @@ jobs:
         run: |
           # Get the list of modified directories (only those in the 'proxies/' folder)
           modified_proxies=$(git diff --name-only origin/main...HEAD | grep -E '^proxies/.*' | cut -d'/' -f2 | sort | uniq)
+
+          # Output the modified proxies for debugging
           echo "Modified proxies: $modified_proxies"
+          
+          # Save the modified proxies list to the GitHub environment for later use
           echo "modified_proxies=$modified_proxies" >> $GITHUB_ENV
       
       # 5️⃣ Prepare and Import Apigee Proxy ZIPs for all proxies
