@@ -83,9 +83,9 @@ jobs:
       run: |
         apigeecli apis import --org ${{ secrets.APIGEE_ORG }} -f proxies/hello-world/apiproxy --default-token
       
-        LATEST_REV=$(apigeecli apis list-revisions --org ${{ secrets.APIGEE_ORG }} --name hello-world | tail -n 1)
+        LATEST_REV=$(apigeecli apis revisions list --org ${{ secrets.APIGEE_ORG }} --name hello-world | tail -n 1)
       
         echo "Deploying revision $LATEST_REV"
       
-        curl -X POST -H "Authorization: Bearer $(gcloud auth print-access-token)" "https://apigee.googleapis.com/v1/organizations/${{ secrets.APIGEE_ORG }}/environments/${{ secrets.APIGEE_ENV }}/apis/hello-world/revisions/$LATEST_REV/deployments?override=true"
+        apigeecli apis deploy  --org ${{ secrets.APIGEE_ORG }}  --env ${{ secrets.APIGEE_ENV }}    --api hello-world   --rev $LATEST_REV   --override   --default-token
       
