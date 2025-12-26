@@ -48,19 +48,19 @@ jobs:
             --org ${{ secrets.APIGEE_ORG }} \
             --default-token
 
-      # 7️⃣ Verify import
       - name: Verify Import
         run: |
           echo "Listing APIs in org..."
           apigeecli apis list --org ${{ secrets.APIGEE_ORG }}
-          echo "Listing revisions for hello-world..."
-          apigeecli apis revisions list --org ${{ secrets.APIGEE_ORG }} --name hello-world
+          echo "Getting details for hello-world..."
+          apigeecli apis get --org ${{ secrets.APIGEE_ORG }} --name hello-world
 
       # 8️⃣ Deploy latest revision
       - name: Deploy latest revision
         run: |
-          LATEST_REV=$(apigeecli apis revisions list --org ${{ secrets.APIGEE_ORG }} --name hello-world | tail -n 1)
-          echo "Deploying revision $LATEST_REV..."
+          # Get the latest revision number
+          LATEST_REV=$(apigeecli apis get --org ${{ secrets.APIGEE_ORG }} --name hello-world | jq -r '.revisions[-1]')
+          echo "Deploying revision $LATEST_REV to environment ${{ secrets.APIGEE_ENV }}..."
           apigeecli apis deploy \
             --org ${{ secrets.APIGEE_ORG }} \
             --env ${{ secrets.APIGEE_ENV }} \
