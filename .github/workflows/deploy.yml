@@ -87,17 +87,8 @@ jobs:
       run: |
         ls -l proxies/hello-world
         ls -l proxies/hello-world/apiproxy
-    
-    #- name: Import & Deploy API Proxy (latest revision)
-    #  run: |
-    #    apigeecli apis import --org ${{ secrets.APIGEE_ORG }} -f proxies/hello-world --default-token
-      
-    #    #LATEST_REV=$(apigeecli apis
     - name: Import Apigee API Proxy
       run: |
-        apigeecli apis import --org ${{ secrets.APIGEE_ORG }} -f proxies/hello-world --default-tokenrevisions list --org ${{ secrets.APIGEE_ORG }} --name hello-world | tail -n 1)
-      
-        echo "Deploying latest revision "
-      
-        apigeecli apis deploy  --org ${{ secrets.APIGEE_ORG }}  --env ${{ secrets.APIGEE_ENV }}    --name hello-world    --default-token
-      
+        apigeecli apis import --org ${{ secrets.APIGEE_ORG }} -f proxies/hello-world --default-token
+  
+    
