@@ -80,8 +80,9 @@ jobs:
      #   apigeecli apis deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name hello-world
     - name: Zip Apigee API Proxy
       run: |
-        cd proxies/hello-world
-        zip -r hello-world.zip apiproxy
+        cd proxies/
+        zip -r hello-world.zip hello-world
+        ls -l
     - name: Import & Deploy API Proxy (latest revision)
       run: |
         apigeecli apis import --org ${{ secrets.APIGEE_ORG }} -f proxies/hello-world.zip --default-token
