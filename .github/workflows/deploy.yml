@@ -87,5 +87,5 @@ jobs:
       
         echo "Deploying latest revision "
       
-        apigeecli apis deploy  --org ${{ secrets.APIGEE_ORG }}  --env ${{ secrets.APIGEE_ENV }}    --name hello-world     --override   --default-token
+        apigeecli apis deploy  --org ${{ secrets.APIGEE_ORG }}  --env ${{ secrets.APIGEE_ENV }}    --name hello-world    --default-token
       
