@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<APIProxy revision="3" name="hello-world">
+<APIProxy revision="4" name="hello-world">
   <DisplayName>Hello World</DisplayName>
   <Description>An example API proxy.</Description>
   <CreatedAt>1766684086019</CreatedAt>
