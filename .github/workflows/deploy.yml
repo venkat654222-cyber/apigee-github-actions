@@ -2,7 +2,7 @@ name: Apigee X CI/CD
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   deploy:
@@ -25,43 +25,45 @@ jobs:
           curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | sh
           echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
 
-      # 4️⃣ Verify apigeecli (runs in separate step so $GITHUB_PATH is effective)
+      # 4️⃣ Verify apigeecli
       - name: Verify apigeecli
         run: |
           which apigeecli
           apigeecli --help
 
-      # 5️⃣ Prepare Apigee Proxy ZIP
-      - name: Prepare Apigee Proxy ZIP
+      # 5️⃣ Detect changed proxies
+      - name: Determine changed proxies
+        id: changed
         run: |
-          cd proxies/hello-world
-          zip -r ../../hello-world.zip apiproxy
-          cd ../..
+          # Detect folders changed under proxies/
+          echo "CHANGED_PROXIES=$(git diff --name-only ${{ github.sha }} ${{ github.event.before }} | grep '^proxies/' | cut -d/ -f2 | sort -u | tr '\n' ' ')" >> $GITHUB_ENV
+          echo "Changed proxies: $CHANGED_PROXIES"
+
+      # 6️⃣ Deploy only changed proxies
+      - name: Deploy changed proxies
+        run: |
           mkdir -p apigee-bundles
-          mv hello-world.zip apigee-bundles/
+          for proxy in $CHANGED_PROXIES; do
+            echo "Processing proxy: $proxy"
 
-      # 6️⃣ Import Apigee Proxy
-      - name: Import Apigee Proxy
-        run: |
-          apigeecli apis import \
-            -f apigee-bundles \
-            --org ${{ secrets.APIGEE_ORG }} \
-            --default-token
+            # Zip the proxy bundle
+            cd proxies/$proxy
+            zip -r ../../../apigee-bundles/$proxy.zip apiproxy
+            cd ../..
 
-      - name: Verify Import
-        run: |
-          echo "Listing APIs in org..."
-          apigeecli apis list --org ${{ secrets.APIGEE_ORG }}
-          echo "Getting details for hello-world..."
-          apigeecli apis get --org ${{ secrets.APIGEE_ORG }} --name hello-world
+            # Import the proxy
+            apigeecli apis import \
+              -f apigee-bundles/$proxy.zip \
+              --org ${{ secrets.APIGEE_ORG }} \
+              --default-token
 
-      # 8️⃣ Deploy latest revision
-      - name: Deploy latest revision
-        run: | 
-          apigeecli apis deploy \
-            --org ${{ secrets.APIGEE_ORG }} \
-            --env ${{ secrets.APIGEE_ENV }} \
-            --name hello-world \
-            --ovr \
-            --default-token 
-            
+            # Deploy the latest revision
+            apigeecli apis deploy \
+              --org ${{ secrets.APIGEE_ORG }} \
+              --env ${{ secrets.APIGEE_ENV }} \
+              --name $proxy \
+              --ovr \
+              --default-token
+
+            echo "Deployment complete for proxy: $proxy"
+          done
