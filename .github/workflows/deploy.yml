@@ -31,7 +31,7 @@ jobs:
           which apigeecli
           apigeecli --help
 
-      # 5️⃣ Prepare and Import Apigee Proxy ZIPs
+      # 5️⃣ Prepare Apigee Proxy ZIPs for all APIs
       - name: Prepare and Import Apigee Proxy ZIPs
         run: |
           mkdir -p apigee-bundles
@@ -45,24 +45,20 @@ jobs:
               # Zip the API proxy into apigee-bundles folder
               zip_file="apigee-bundles/${api_name}.zip"
               cd "$api"
-              zip -r "../../$zip_file" apiproxy  # Ensure apiproxy is correctly zipped
+              zip -r "../../$zip_file" apiproxy
               cd ../..
-
-              # Check if the ZIP file is created
-              echo "Listing contents of apigee-bundles:"
-              ls -l apigee-bundles
 
               # Import the zip file directly
               echo "Importing $api_name ..."
               apigeecli apis import \
-                -f "$(pwd)/$zip_file" \
+                -f "$zip_file" \
                 --org ${{ secrets.APIGEE_ORG }} \
                 --default-token
             fi
           done
 
       # 6️⃣ Deploy latest revision for all proxies
-      - name: Deploy latest revision
+      - name: Deploy latest revision for all proxies
         run: |
           # Loop through each proxy in apigee-bundles and deploy
           for api in proxies/*; do
