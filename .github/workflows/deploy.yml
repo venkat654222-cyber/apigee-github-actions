@@ -29,7 +29,7 @@ jobs:
       - name: Verify apigeecli
         run: |
           which apigeecli
-          apigeecli version
+          apigeecli --help
 
       # 5️⃣ Prepare Apigee Proxy ZIP
       - name: Prepare Apigee Proxy ZIP
