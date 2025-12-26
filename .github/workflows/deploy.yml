@@ -57,7 +57,7 @@ jobs:
 
       # 8️⃣ Deploy latest revision
       - name: Deploy latest revision
-        run:  
+        run: | 
           apigeecli apis deploy \
             --org ${{ secrets.APIGEE_ORG }} \
             --env ${{ secrets.APIGEE_ENV }} \
