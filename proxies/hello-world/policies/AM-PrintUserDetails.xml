@@ -17,7 +17,7 @@
       <Header name="rev4old"/>
     </Headers>
     <QueryParams>
-      <QueryParam name="rev4"/>
+      <QueryParam name="retest"/>
     </QueryParams>
     <FormParams>
       <FormParam name="f1"/>
