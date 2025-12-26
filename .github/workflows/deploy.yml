@@ -30,11 +30,17 @@ jobs:
         run: |
           which apigeecli
           apigeecli --help
+      # 5️⃣ Fetch full Git history to make sure we can compare commits
+      - name: Fetch full Git history
+        run: |
+          git fetch --prune --unshallow
+
+      # 6️⃣ Check for changes in proxy folders
       - name: Check for changed proxies
         id: check_changes
         run: |
           # Get the list of modified directories (only those in the 'proxies/' folder)
-          modified_proxies=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E '^proxies/.*' | cut -d'/' -f2 | sort | uniq)
+          modified_proxies=$(git diff --name-only origin/main...HEAD | grep -E '^proxies/.*' | cut -d'/' -f2 | sort | uniq)
           echo "Modified proxies: $modified_proxies"
           echo "modified_proxies=$modified_proxies" >> $GITHUB_ENV
       
