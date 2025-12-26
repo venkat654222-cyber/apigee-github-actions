@@ -57,13 +57,10 @@ jobs:
 
       # 8️⃣ Deploy latest revision
       - name: Deploy latest revision
-        run: |
-          # Get the latest revision number
-          # LATEST_REV=$(apigeecli apis get --org ${{ secrets.APIGEE_ORG }} --name hello-world | jq -r '.revisions[-1]')
-          echo "Deploying revision $LATEST_REV to environment ${{ secrets.APIGEE_ENV }}..."
+        run:  
           apigeecli apis deploy \
             --org ${{ secrets.APIGEE_ORG }} \
             --env ${{ secrets.APIGEE_ENV }} \
             --name hello-world \
             --default-token
-            --ovr
+            --override
