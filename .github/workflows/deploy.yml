@@ -9,59 +9,67 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1?? Checkout the repo
+      # 1️⃣ Checkout the repo
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2?? Authenticate to GCP
+      # 2️⃣ Authenticate to GCP
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_APIGEE_SA_KEY }}
 
-      # 3?? Install apigeecli
+      # 3️⃣ Install apigeecli
       - name: Install apigeecli
         run: |
           curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | sh
           echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
 
-      # 4?? Verify apigeecli (runs in separate step so $GITHUB_PATH is effective)
+      # 4️⃣ Verify apigeecli (runs in separate step so $GITHUB_PATH is effective)
       - name: Verify apigeecli
         run: |
           which apigeecli
           apigeecli --help
 
-      # 5?? Prepare Apigee Proxy ZIP
-      - name: Prepare Apigee Proxy ZIP
+      # 5️⃣ Prepare and Import Apigee Proxy ZIPs for all proxies
+      - name: Prepare and Import Apigee Proxy ZIPs
         run: |
-          cd proxies/hello-world
-          zip -r ../../hello-world.zip apiproxy
-          cd ../..
           mkdir -p apigee-bundles
-          mv hello-world.zip apigee-bundles/
 
-      # 6?? Import Apigee Proxy
-      - name: Import Apigee Proxy
-        run: |
-          apigeecli apis import \
-            -f apigee-bundles \
-            --org ${{ secrets.APIGEE_ORG }} \
-            --default-token
+          # Loop through all proxies, zip and import each API proxy
+          for api in proxies/*; do
+            if [ -d "$api/apiproxy" ]; then
+              api_name=$(basename $api)
+              echo "Processing API proxy: $api_name"
+              
+              # Zip the API proxy into apigee-bundles folder
+              zip_file="apigee-bundles/${api_name}.zip"
+              cd "$api"
+              zip -r "../../$zip_file" apiproxy
+              cd ../..
 
-      - name: Verify Import
-        run: |
-          echo "Listing APIs in org..."
-          apigeecli apis list --org ${{ secrets.APIGEE_ORG }}
-          echo "Getting details for hello-world..."
-          apigeecli apis get --org ${{ secrets.APIGEE_ORG }} --name hello-world
+              # Import the zip file directly
+              echo "Importing $api_name ..."
+              apigeecli apis import \
+                -f "$zip_file" \
+                --org ${{ secrets.APIGEE_ORG }} \
+                --default-token
+            fi
+          done
 
-      # 8?? Deploy latest revision
-      - name: Deploy latest revision
-        run: | 
-          apigeecli apis deploy \
-            --org ${{ secrets.APIGEE_ORG }} \
-            --env ${{ secrets.APIGEE_ENV }} \
-            --name hello-world \
-            --ovr \
-            --default-token 
-            
+      # 6️⃣ Deploy latest revision for all proxies
+      #- name: Deploy latest revision for all proxies
+       # run: |
+          # Loop through each proxy in apigee-bundles and deploy
+        #  for api in proxies/*; do
+         #   if [ -d "$api/apiproxy" ]; then
+          #    api_name=$(basename $api)
+           #   echo "Deploying $api_name ..."
+            #  apigeecli apis deploy \
+             #   --org ${{ secrets.APIGEE_ORG }} \
+              #  --env ${{ secrets.APIGEE_ENV }} \
+               # --name "$api_name" \
+                #--ovr \
+                # --default-token
+            #fi
+          #done
