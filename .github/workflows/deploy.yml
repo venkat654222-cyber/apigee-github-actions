@@ -1,4 +1,4 @@
-name: Apigee X CI/CD - Deploy Multiple APIs
+name: Apigee X CI/CD
 
 on:
   push:
@@ -25,35 +25,45 @@ jobs:
           curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | sh
           echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
 
-      # 4️⃣ Verify apigeecli
+      # 4️⃣ Verify apigeecli (runs in separate step so $GITHUB_PATH is effective)
       - name: Verify apigeecli
         run: |
           which apigeecli
           apigeecli --help
 
-      - name: Deploy all API proxies
+      # 5️⃣ Prepare Apigee Proxy ZIPs and Import
+      - name: Prepare and Import Apigee Proxy ZIPs
         run: |
           mkdir -p apigee-bundles
-        
+
+          # Loop through all proxies, zip and import each API proxy
           for api in proxies/*; do
             if [ -d "$api/apiproxy" ]; then
               api_name=$(basename $api)
               echo "Processing API proxy: $api_name"
-        
+              
               # Zip the API proxy into apigee-bundles folder
               zip_file="apigee-bundles/${api_name}.zip"
               cd "$api"
               zip -r "../../$zip_file" apiproxy
               cd ../..
-        
-              # Import the zip file (directly)
+
+              # Import the zip file directly
               echo "Importing $api_name ..."
               apigeecli apis import \
                 -f "$zip_file" \
                 --org ${{ secrets.APIGEE_ORG }} \
                 --default-token
-        
-              # Deploy latest revision
+            fi
+          done
+
+      # 6️⃣ Deploy latest revision for all proxies
+      - name: Deploy latest revision
+        run: |
+          # Loop through each proxy in apigee-bundles and deploy
+          for api in proxies/*; do
+            if [ -d "$api/apiproxy" ]; then
+              api_name=$(basename $api)
               echo "Deploying $api_name ..."
               apigeecli apis deploy \
                 --org ${{ secrets.APIGEE_ORG }} \
@@ -63,4 +73,3 @@ jobs:
                 --default-token
             fi
           done
-
