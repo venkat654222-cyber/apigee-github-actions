@@ -75,6 +75,6 @@ jobs:
     # ----------------------
     - name: Import & Deploy API Proxy
       run: |
-        apigeecli apis import           --org ${{ secrets.APIGEE_ORG }}                    -f proxies/hello-world           --action create
+        apigeecli apis import           --org ${{ secrets.APIGEE_ORG }}                    -f proxies/hello-world          --default-token
 
         apigeecli apis deploy           --org ${{ secrets.APIGEE_ORG }}           --env ${{ secrets.APIGEE_ENV }}           --name hello-world
