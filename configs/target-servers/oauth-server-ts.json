@@ -1,6 +1,6 @@
 {
     "name": "oauth-server-ts",
-    "host": "oauth.backend.com",
+    "host": "oauth2.backend.com",
     "port": 443,
     "isEnabled": true,
     "sLIsEnabled": true
