@@ -66,7 +66,7 @@ jobs:
           for SF_NAME in $MODIFIED_SFS; do
            # Check if the sharedflowbundle directory exists
            if [ -d "sharedflows/$SF_NAME/sharedflowbundle" ]; then
-             echo "🚀 Creating and Deploying Shared Flow: $SF_NAME"
+             echo "Creating and Deploying Shared Flow: $SF_NAME"
              
              # Use --sf-folder to point directly to the sharedflowbundle directory
              apigeecli sharedflows create bundle \
@@ -82,7 +82,7 @@ jobs:
                --env ${{ secrets.APIGEE_ENV }} \
                --ovr --default-token
            fi
-         done
+          done
 
       - name: Deploy Modified API Proxies
         run: |

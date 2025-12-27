@@ -14,7 +14,7 @@
   </Copy>
   <Remove>
     <Headers>
-      <Header name="h1222333333"/>
+      <Header name="h122sds2333333"/>
     </Headers>
     <QueryParams>
       <QueryParam name="q1"/>
