@@ -30,9 +30,9 @@ jobs:
         run: |
           which apigeecli
           apigeecli --help
-          
+
        # ---- Create / Update KVMs ----
-        - name: Deploy KVMs
+      - name: Deploy KVMs
         run: |
           for file in kvms/*.json; do
             apigeecli kvms create \
