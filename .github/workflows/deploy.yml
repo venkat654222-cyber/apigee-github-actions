@@ -25,10 +25,22 @@ jobs:
           workload_identity_provider: 'projects/1041995087153/locations/global/workloadIdentityPools/github-pool/providers/github'
           service_account: 'apigee-deploy-sa@bamboo-zone-363116.iam.gserviceaccount.com'
 
-      - name: Install apigeecli
-        run: |
-          curl -L raw.githubusercontent.com | sh
-          echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
+          - name: Install apigeecli
+          run: |
+            # 1. Download the installer to a file
+            curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh -o install_apigeecli.sh
+            
+            # 2. Check if the file was downloaded successfully and is not empty
+            if [ -s install_apigeecli.sh ]; then
+              chmod +x install_apigeecli.sh
+              ./install_apigeecli.sh
+              
+              # 3. Add to GITHUB_PATH for subsequent steps
+              echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
+            else
+              echo "Error: apigeecli installer download failed or file is empty."
+              exit 1
+            fi
 
       # 1️⃣ Manage Environment Configs (KVMs)
       # Scans configs/kvms/*.json and syncs them
