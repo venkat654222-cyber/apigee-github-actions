@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<AssignMessage continueOnError="false" enabled="true" name="AM-PrintUserDetails">
-  <DisplayName>AM-PrintUserDetails</DisplayName>
+<AssignMessage continueOnError="false" enabled="true" name="AM-SF-PrintUserDetails">
+  <DisplayName>AM-SF-PrintUserDetails</DisplayName>
   <Properties/>
   <Copy source="request">
     <Headers/>
@@ -14,7 +14,7 @@
   </Copy>
   <Remove>
     <Headers>
-      <Header name="h122sds2333333"/>
+      <Header name="h1"/>
     </Headers>
     <QueryParams>
       <QueryParam name="q1"/>
