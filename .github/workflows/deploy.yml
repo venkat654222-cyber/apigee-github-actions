@@ -82,33 +82,33 @@ jobs:
       # 3️⃣ Deploy Modified API Proxies
       - name: Deploy Modified API Proxies
         run: |
-        mkdir -p proxy-bundles
-        # Detect modified Proxies in this commit
-        MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/' | cut -d/ -f2 | sort -u || true)
-        
-        if [ -n "$MODIFIED_PROXIES" ]; then
-          for PROXY_NAME in $MODIFIED_PROXIES; do
-            if [ -d "proxies/$PROXY_NAME/apiproxy" ]; then
-              echo "🚀 Updating Proxy: $PROXY_NAME"
-              
-              # 1. Zip the proxy
-              cd "proxies/$PROXY_NAME" && zip -r "../../proxy-bundles/$PROXY_NAME.zip" apiproxy && cd ../..
-              
-              # 2. Create/Import the bundle (Corrected command for 2025)
-              apigeecli apis create bundle \
-                --name "$PROXY_NAME" \
-                -f "proxy-bundles/$PROXY_NAME.zip" \
-                --org ${{ secrets.APIGEE_ORG }} \
-                --default-token
-              
-              # 3. Deploy the latest revision
-              apigeecli apis deploy \
-                --name "$PROXY_NAME" \
-                --org ${{ secrets.APIGEE_ORG }} \
-                --env ${{ secrets.APIGEE_ENV }} \
-                --ovr --default-token
-            fi
-          done
-        else
-          echo "No API Proxies modified."
-        fi
+          mkdir -p proxy-bundles
+          # Detect modified Proxies in this commit
+          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/' | cut -d/ -f2 | sort -u || true)
+          
+          if [ -n "$MODIFIED_PROXIES" ]; then
+            for PROXY_NAME in $MODIFIED_PROXIES; do
+              if [ -d "proxies/$PROXY_NAME/apiproxy" ]; then
+                echo "🚀 Updating Proxy: $PROXY_NAME"
+                
+                # 1. Zip the proxy
+                cd "proxies/$PROXY_NAME" && zip -r "../../proxy-bundles/$PROXY_NAME.zip" apiproxy && cd ../..
+                
+                # 2. Create/Import the bundle (Corrected command for 2025)
+                apigeecli apis create bundle \
+                  --name "$PROXY_NAME" \
+                  -f "proxy-bundles/$PROXY_NAME.zip" \
+                  --org ${{ secrets.APIGEE_ORG }} \
+                  --default-token
+                
+                # 3. Deploy the latest revision
+                apigeecli apis deploy \
+                  --name "$PROXY_NAME" \
+                  --org ${{ secrets.APIGEE_ORG }} \
+                  --env ${{ secrets.APIGEE_ENV }} \
+                  --ovr --default-token
+              fi
+            done
+          else
+            echo "No API Proxies modified."
+          fi
