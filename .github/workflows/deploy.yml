@@ -59,25 +59,31 @@ jobs:
             done
           fi
 
-      # 2️⃣ Deploy Modified Shared Flows (Must be before Proxies)
+       # 2️⃣ Deploy Modified Shared Flows (Direct Folder)
       - name: Deploy Modified Shared Flows
         run: |
-          mkdir -p sf-bundles
-          # Detect modified Shared Flows in this commit
           MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep '^sharedflows/' | cut -d/ -f2 | sort -u || true)
-          
-          if [ -n "$MODIFIED_SFS" ]; then
-            for SF_NAME in $MODIFIED_SFS; do
-              if [ -d "sharedflows/$SF_NAME/sharedflowbundle" ]; then
-                echo "Updating Shared Flow: $SF_NAME"
-                cd "sharedflows/$SF_NAME" && zip -r "../../sf-bundles/$SF_NAME.zip" sharedflowbundle && cd ../..
-                apigeecli sharedflows import --org ${{ secrets.APIGEE_ORG }} --name "$SF_NAME" -p "sf-bundles/$SF_NAME.zip" --default-token
-                apigeecli sharedflows deploy --org ${{ secrets.APIGEE_ORG }} --env ${{ secrets.APIGEE_ENV }} --name "$SF_NAME" --ovr --default-token
-              fi
-            done
-          else
-            echo "No Shared Flows modified."
-          fi
+         
+          for SF_NAME in $MODIFIED_SFS; do
+           # Check if the sharedflowbundle directory exists
+           if [ -d "sharedflows/$SF_NAME/sharedflowbundle" ]; then
+             echo "🚀 Creating and Deploying Shared Flow: $SF_NAME"
+             
+             # Use --sf-folder to point directly to the sharedflowbundle directory
+             apigeecli sharedflows create bundle \
+               --name "$SF_NAME" \
+               --sf-folder "sharedflows/$SF_NAME/sharedflowbundle" \
+               --org ${{ secrets.APIGEE_ORG }} \
+               --default-token
+             
+             # Deploy the latest revision
+             apigeecli sharedflows deploy \
+               --name "$SF_NAME" \
+               --org ${{ secrets.APIGEE_ORG }} \
+               --env ${{ secrets.APIGEE_ENV }} \
+               --ovr --default-token
+           fi
+         done
 
       - name: Deploy Modified API Proxies
         run: |
