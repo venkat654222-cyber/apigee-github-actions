@@ -79,21 +79,24 @@ jobs:
             echo "No Shared Flows modified."
           fi
 
-      - name: Deploy Modified API Proxies (Direct Folder)
-        run: |
-          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/' | cut -d/ -f2 | sort -u || true)
+        - name: Deploy Modified API Proxies
+          run: |
+            MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/' | cut -d/ -f2 | sort -u || true)
             
             for PROXY_NAME in $MODIFIED_PROXIES; do
+              # Check if the apiproxy directory exists
               if [ -d "proxies/$PROXY_NAME/apiproxy" ]; then
                 echo "🚀 Creating and Deploying Proxy: $PROXY_NAME"
                 
-                # Use the path to the folder containing 'apiproxy'
+                # Standard Fix: Point to the folder that CONTAINS the apiproxy directory
+                # For many apigeecli versions, this is proxies/$PROXY_NAME/
                 apigeecli apis create bundle \
                   --name "$PROXY_NAME" \
-                  --proxy-folder "proxies/$PROXY_NAME" \
+                  --proxy-folder "proxies/$PROXY_NAME/apiproxy" \
                   --org ${{ secrets.APIGEE_ORG }} \
                   --default-token
                 
+                # Deploy the latest revision
                 apigeecli apis deploy \
                   --name "$PROXY_NAME" \
                   --org ${{ secrets.APIGEE_ORG }} \
