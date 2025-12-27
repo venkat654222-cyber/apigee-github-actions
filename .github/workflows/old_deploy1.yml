@@ -1,0 +1,138 @@
+name: Apigee X CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout the repo
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2️⃣ Authenticate to GCP
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_APIGEE_SA_KEY }}
+
+      # 3️⃣ Install apigeecli
+      - name: Install apigeecli
+        run: |
+          curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | sh
+          echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
+
+      # 4️⃣ Verify apigeecli (runs in separate step so $GITHUB_PATH is effective)
+      - name: Verify apigeecli
+        run: |
+          which apigeecli
+          apigeecli --help
+
+      # 🆕 New Step: Manage KVMs
+      # Assumes you have a file at: kvms/my-kvm-map.json
+      #- name: Manage KVMs
+      #  run: |
+      #    KVM_NAME="backEndDetails"
+          
+          # 1. Create the KVM if it doesn't exist (Environment Scope)
+          # Apigee X KVMs are encrypted by default.
+       #   apigeecli kvms create \
+        #    --org ${{ secrets.APIGEE_ORG }} \
+        #    --env ${{ secrets.APIGEE_ENV }} \
+        #    --name "$KVM_NAME" \
+         #   --default-token || echo "KVM already exists or creation failed"
+
+          # 2. Import KVM Entries from a JSON file
+          # The file should be an array of {"name": "key", "value": "val"}
+          #if [ -f "kvms/${KVM_NAME}.json" ]; then
+           # apigeecli kvms entries import \
+            #  --org ${{ secrets.APIGEE_ORG }} \
+             # --env ${{ secrets.APIGEE_ENV }} \
+              #--map "$KVM_NAME" \
+              #-f "kvms/${KVM_NAME}.json" \
+              #--default-token
+          #fi     
+       # 🆕 New Step: Loop through and Manage Multiple KVMs
+      - name: Manage KVMs
+        run: |
+         # Define the path to your KVM JSON files
+         KVM_DIR="kvms"
+         
+         # Check if directory exists and has .json files
+         if [ -d "$KVM_DIR" ] && [ "$(ls -A $KVM_DIR/*.json 2>/dev/null)" ]; then
+           for file in "$KVM_DIR"/*.json; do
+             # Get filename without path and extension (e.g., "test1-kvm")
+             KVM_NAME=$(basename "$file" .json)
+             
+             echo "Processing KVM: $KVM_NAME"
+             
+             # 1. Create the KVM if it doesn't exist
+             # Using --default-token which uses the authenticated GCP session
+             apigeecli kvms create \
+               --org ${{ secrets.APIGEE_ORG }} \
+               --env ${{ secrets.APIGEE_ENV }} \
+               --name "$KVM_NAME" \
+               --default-token || echo "KVM '$KVM_NAME' already exists, skipping creation."
+
+             # 2. Import KVM Entries from the specific JSON file
+             # apigeecli uses -f for the specific entries file
+             echo "Importing entries for $KVM_NAME..."
+             apigeecli kvms entries import \
+               --org ${{ secrets.APIGEE_ORG }} \
+               --env ${{ secrets.APIGEE_ENV }} \
+               --map "$KVM_NAME" \
+               -f "$file" \
+               --default-token
+           done
+         else
+           echo "No KVM JSON files are found in $KVM_DIR"
+         fi
+      # 5️⃣ Prepare and Import Apigee Proxy ZIPs for all proxies
+      - name: Prepare and Import Apigee Proxy ZIPs
+        run: |
+          mkdir -p apigee-bundles
+
+          # Loop through all proxies, zip and import each API proxy
+          for api in proxies/*; do
+            if [ -d "$api/apiproxy" ]; then
+              api_name=$(basename $api)
+              echo "Processing API proxy: $api_name"
+
+              # Zip the API proxy into apigee-bundles folder
+              zip_file="apigee-bundles/${api_name}.zip"
+              cd "$api"
+              zip -r "../../$zip_file" apiproxy
+              cd ../..
+
+              # Verify the file exists
+              if [ -f "$zip_file" ]; then
+                echo "Importing $api_name ..."
+                apigeecli apis import \
+                  -f "${GITHUB_WORKSPACE}/apigee-bundles" \
+                  --org ${{ secrets.APIGEE_ORG }} \
+                  --default-token
+              else
+                echo "Error: $zip_file not found!"
+              fi
+            fi
+          done
+
+      # 6️⃣ Deploy latest revision for all proxies
+      - name: Deploy latest revision for all proxies
+        run: |
+          # Loop through each proxy in apigee-bundles and deploy
+          for api in proxies/*; do
+            if [ -d "$api/apiproxy" ]; then
+              api_name=$(basename $api)
+              echo "Deploying $api_name ..."
+              apigeecli apis deploy \
+                --org ${{ secrets.APIGEE_ORG }} \
+                --env ${{ secrets.APIGEE_ENV }} \
+                --name "$api_name" \
+                --ovr \
+                --default-token
+            fi
+          done
