@@ -25,8 +25,8 @@ jobs:
           workload_identity_provider: 'projects/1041995087153/locations/global/workloadIdentityPools/github-pool/providers/github'
           service_account: 'apigee-deploy-sa@bamboo-zone-363116.iam.gserviceaccount.com'
 
-          - name: Install apigeecli
-          run: |
+      - name: Install apigeecli
+        run: |
             # 1. Download the installer to a file
             curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh -o install_apigeecli.sh
             
