@@ -33,29 +33,63 @@ jobs:
 
       # 🆕 New Step: Manage KVMs
       # Assumes you have a file at: kvms/my-kvm-map.json
-      - name: Manage KVMs
-        run: |
-          KVM_NAME="backEndDetails"
+      #- name: Manage KVMs
+      #  run: |
+      #    KVM_NAME="backEndDetails"
           
           # 1. Create the KVM if it doesn't exist (Environment Scope)
           # Apigee X KVMs are encrypted by default.
-          apigeecli kvms create \
-            --org ${{ secrets.APIGEE_ORG }} \
-            --env ${{ secrets.APIGEE_ENV }} \
-            --name "$KVM_NAME" \
-            --default-token || echo "KVM already exists or creation failed"
+       #   apigeecli kvms create \
+        #    --org ${{ secrets.APIGEE_ORG }} \
+        #    --env ${{ secrets.APIGEE_ENV }} \
+        #    --name "$KVM_NAME" \
+         #   --default-token || echo "KVM already exists or creation failed"
 
           # 2. Import KVM Entries from a JSON file
           # The file should be an array of {"name": "key", "value": "val"}
-          if [ -f "kvms/${KVM_NAME}.json" ]; then
-            apigeecli kvms entries import \
-              --org ${{ secrets.APIGEE_ORG }} \
-              --env ${{ secrets.APIGEE_ENV }} \
-              --map "$KVM_NAME" \
-              -f "kvms/${KVM_NAME}.json" \
-              --default-token
-          fi     
+          #if [ -f "kvms/${KVM_NAME}.json" ]; then
+           # apigeecli kvms entries import \
+            #  --org ${{ secrets.APIGEE_ORG }} \
+             # --env ${{ secrets.APIGEE_ENV }} \
+              #--map "$KVM_NAME" \
+              #-f "kvms/${KVM_NAME}.json" \
+              #--default-token
+          #fi     
+       # 🆕 New Step: Loop through and Manage Multiple KVMs
+      - name: Manage KVMs
+        run: |
+         # Define the path to your KVM JSON files
+         KVM_DIR="kvms"
+         
+         # Check if directory exists and has .json files
+         if [ -d "$KVM_DIR" ] && [ "$(ls -A $KVM_DIR/*.json 2>/dev/null)" ]; then
+           for file in "$KVM_DIR"/*.json; do
+             # Get filename without path and extension (e.g., "test1-kvm")
+             KVM_NAME=$(basename "$file" .json)
+             
+             echo "Processing KVM: $KVM_NAME"
+             
+             # 1. Create the KVM if it doesn't exist
+             # Using --default-token which uses the authenticated GCP session
+             apigeecli kvms create \
+               --org ${{ secrets.APIGEE_ORG }} \
+               --env ${{ secrets.APIGEE_ENV }} \
+               --name "$KVM_NAME" \
+               --default-token || echo "KVM '$KVM_NAME' already exists, skipping creation."
 
+             # 2. Import KVM Entries from the specific JSON file
+             # apigeecli uses -f for the specific entries file
+             echo "Importing entries for $KVM_NAME..."
+             apigeecli kvms entries import \
+               --org ${{ secrets.APIGEE_ORG }} \
+               --env ${{ secrets.APIGEE_ENV }} \
+               --map "$KVM_NAME" \
+               -f "$file" \
+               --default-token
+           done
+         else
+           echo "No KVM JSON files found in $KVM_DIR"
+         fi
       # 5️⃣ Prepare and Import Apigee Proxy ZIPs for all proxies
       - name: Prepare and Import Apigee Proxy ZIPs
         run: |
