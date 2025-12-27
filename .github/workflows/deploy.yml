@@ -31,16 +31,30 @@ jobs:
           which apigeecli
           apigeecli --help
 
-       # ---- Create / Update KVMs ----
-      - name: Deploy KVMs
+      # 🆕 New Step: Manage KVMs
+      # Assumes you have a file at: kvms/my-kvm-map.json
+      - name: Manage KVMs
         run: |
-          for file in kvms/*.json; do
-            apigeecli kvms create \
+          KVM_NAME="backEndDetails"
+          
+          # 1. Create the KVM if it doesn't exist (Environment Scope)
+          # Apigee X KVMs are encrypted by default.
+          apigeecli kvms create \
+            --org ${{ secrets.APIGEE_ORG }} \
+            --env ${{ secrets.APIGEE_ENV }} \
+            --name "$KVM_NAME" \
+            --default-token || echo "KVM already exists or creation failed"
+
+          # 2. Import KVM Entries from a JSON file
+          # The file should be an array of {"name": "key", "value": "val"}
+          if [ -f "kvms/${KVM_NAME}.json" ]; then
+            apigeecli kvms entries import \
               --org ${{ secrets.APIGEE_ORG }} \
               --env ${{ secrets.APIGEE_ENV }} \
-              --file "$file" \
-              --force || true
-          done    
+              --map "$KVM_NAME" \
+              -f "kvms/${KVM_NAME}.json" \
+              --default-token
+          fi     
 
       # 5️⃣ Prepare and Import Apigee Proxy ZIPs for all proxies
       - name: Prepare and Import Apigee Proxy ZIPs
