@@ -88,7 +88,7 @@ jobs:
                --default-token
            done
          else
-           echo "No KVM JSON files found in $KVM_DIR"
+           echo "No KVM JSON files are found in $KVM_DIR"
          fi
       # 5️⃣ Prepare and Import Apigee Proxy ZIPs for all proxies
       - name: Prepare and Import Apigee Proxy ZIPs
