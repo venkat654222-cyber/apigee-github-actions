@@ -79,9 +79,9 @@ jobs:
             echo "No Shared Flows modified."
           fi
 
-        - name: Deploy Modified API Proxies
-          run: |
-            MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/' | cut -d/ -f2 | sort -u || true)
+      - name: Deploy Modified API Proxies
+        run: |
+          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/' | cut -d/ -f2 | sort -u || true)
             
             for PROXY_NAME in $MODIFIED_PROXIES; do
               # Check if the apiproxy directory exists
