@@ -59,11 +59,10 @@ jobs:
             done
           fi
 
-       # 2️⃣ Deploy Modified Shared Flows (Direct Folder)
+      # 2️⃣ Deploy Modified Shared Flows (Direct Folder)
       - name: Deploy Modified Shared Flows
         run: |
           MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep '^sharedflows/' | cut -d/ -f2 | sort -u || true)
-         
           for SF_NAME in $MODIFIED_SFS; do
            # Check if the sharedflowbundle directory exists
            if [ -d "sharedflows/$SF_NAME/sharedflowbundle" ]; then
