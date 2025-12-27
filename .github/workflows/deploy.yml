@@ -30,6 +30,17 @@ jobs:
         run: |
           which apigeecli
           apigeecli --help
+          
+       # ---- Create / Update KVMs ----
+        - name: Deploy KVMs
+        run: |
+          for file in kvms/*.json; do
+            apigeecli kvms create \
+              --org ${{ secrets.APIGEE_ORG }} \
+              --env ${{ secrets.APIGEE_ENV }} \
+              --file "$file" \
+              --force || true
+          done    
 
       # 5️⃣ Prepare and Import Apigee Proxy ZIPs for all proxies
       - name: Prepare and Import Apigee Proxy ZIPs

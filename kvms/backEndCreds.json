@@ -1,0 +1,8 @@
+{
+    "name": "backEndCreds",
+    "encrypted": true,
+    "entry": [
+      { "name": "username", "value": "blueyonder" },
+      { "name": "password", "value": "123456" }
+    ]
+  }
