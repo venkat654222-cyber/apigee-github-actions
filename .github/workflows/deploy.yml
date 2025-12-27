@@ -59,6 +59,37 @@ jobs:
             done
           fi
 
+      # 1.5 Manage Target Servers
+      - name: Deploy Target Servers
+        run: |
+          TS_DIR="configs/target-servers"
+          
+          if [ -d "$TS_DIR" ] && [ "$(ls -A $TS_DIR/*.json 2>/dev/null)" ]; then
+            for file in "$TS_DIR"/*.json; do
+              # Get filename without extension (e.g., "backend-service-ts")
+              TS_NAME=$(basename "$file" .json)
+              
+              echo "🚀 Syncing Target Server: $TS_NAME"
+              
+              # Import/Update the Target Server
+              # apigeecli uses 'import' to handle create or update from a file
+              apigeecli targetservers create \
+                --org ${{ secrets.APIGEE_ORG }} \
+                --env ${{ secrets.APIGEE_ENV }} \
+                --name "$TS_NAME" \
+                -f "$file" \
+                --default-token || \
+              apigeecli targetservers update \
+                --org ${{ secrets.APIGEE_ORG }} \
+                --env ${{ secrets.APIGEE_ENV }} \
+                --name "$TS_NAME" \
+                -f "$file" \
+                --default-token
+            done
+          else
+            echo "No Target Server configurations found in $TS_DIR"
+          fi
+          
       # 2️⃣ Deploy Modified Shared Flows (Direct Folder)
       - name: Deploy Modified Shared Flows
         run: |
