@@ -3,6 +3,6 @@
     "encrypted": false,
     "entry": [
       { "name": "baseUrl", "value": "https://example.com" },
-      { "name": "timeout", "value": "30" }
+      { "name": "timeout", "value": "35" }
     ]
   }

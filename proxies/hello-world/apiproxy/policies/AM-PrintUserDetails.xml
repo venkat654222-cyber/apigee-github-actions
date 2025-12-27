@@ -14,7 +14,7 @@
   </Copy>
   <Remove>
     <Headers>
-      <Header name="rev4old_depc399"/>
+      <Header name="rev4old_dep33c399"/>
     </Headers>
     <QueryParams>
       <QueryParam name="retest3344555"/>
