@@ -1,7 +1,8 @@
-{
+[{
     "name": "backend-kubernetes-server-ts",
     "host": "api1.backend.com",
     "port": 443,
     "isEnabled": true,
     "sLIsEnabled": true
   }
+]

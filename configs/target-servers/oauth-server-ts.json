@@ -1,7 +1,9 @@
-{
-    "name": "oauth-server-ts",
-    "host": "oauth2.backend1.com",
-    "port": 443,
-    "isEnabled": true,
-    "sLIsEnabled": true
-  }
+[
+    {
+      "name": "oauth-server-ts",
+      "host": "api.oauth-provider.com",
+      "port": 443,
+      "isEnabled": true,
+      "protocol": "HTTP"
+    }
+  ]
