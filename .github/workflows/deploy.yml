@@ -83,17 +83,8 @@ jobs:
                 # Assumes the JSON format you provided previously (array of one object)
                 TIMEOUT=$(jq -r '.[0].expirySettings.timeoutInSec.value' "$file")
                 DESC=$(jq -r '.[0].description' "$file")
-                
-                # Try to create the cache first. If it fails (already exists), then update it.
-                # Note: 'create' only accepts flags, not a file input.
-                # apigeecli environments caches create \
-                #   --name "$CACHE_NAME" \
-                #   --org "${{ secrets.APIGEE_ORG }}" \
-                #   --env "${{ secrets.APIGEE_ENV }}" \
-                #   --desc "$DESC" \
-                #   --default-token
-                 
-                  apigeecli environments caches create --help
+                              
+               apigeecli environments caches create --help
                 
                 echo "✅ Cache '$CACHE_NAME' deployed successfully."
               fi

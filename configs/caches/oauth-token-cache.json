@@ -1,7 +1,7 @@
 [
     {
       "name": "token-cache",
-      "description": "Cache for OAuth tokens",
+      "description": "Cache for OAuth2 tokens",
       "expirySettings": {
         "timeoutInSec": {
           "value": "360"
