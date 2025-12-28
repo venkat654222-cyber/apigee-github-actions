@@ -1,0 +1,12 @@
+[
+    {
+      "name": "token-cache",
+      "description": "Cache for OAuth tokens",
+      "expirySettings": {
+        "timeoutInSec": {
+          "value": "3600"
+        }
+      },
+      "skipCacheIfElementSizeInKBExceeded": "1024"
+    }
+  ]

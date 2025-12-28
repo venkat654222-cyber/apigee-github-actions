@@ -70,6 +70,35 @@ jobs:
           else
             echo "ℹ️ No Target Servers modified in this commit."
           fi
+      - name: Deploy Modified Caches
+        run: |
+          # Detect modified Cache JSONs
+          MODIFIED_CACHES=$(git diff --name-only HEAD^ HEAD | grep '^configs/caches/' | sort -u || true)
+
+          if [ -n "$MODIFIED_CACHES" ]; then
+            for file in $MODIFIED_CACHES; do
+              if [ -f "$file" ]; then
+                CACHE_NAME=$(basename "$file" .json)
+                echo "🚀 Syncing Modified Cache: $CACHE_NAME"
+
+                # Import the Cache configuration
+                # apigeecli caches import handles both create and update
+                apigeecli caches import \
+                  --org ${{ secrets.APIGEE_ORG }} \
+                  --env ${{ secrets.APIGEE_ENV }} \
+                  -f "$file" \
+                  --default-token
+                
+                echo "✅ Cache '$CACHE_NAME' deployed successfully."
+              fi
+            done
+          else
+            echo "ℹ️ No Cache configurations modified in this commit."
+          fi
+      
+      # 🟢 Cache Verification Step
+      - name: Verify Deployed Caches
+        run: apigeecli caches list --org ${{ secrets.APIGEE_ORG }} --env ${{ secrets.APIGEE_ENV }} --default-token    
 
       - name: Deploy Modified Shared Flows
         run: |
