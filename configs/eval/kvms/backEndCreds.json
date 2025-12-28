@@ -2,7 +2,7 @@
     "name": "backEndCreds",
     "encrypted": true,
     "entry": [
-      { "name": "username", "value": "sap" },
+      { "name": "username1", "value": "sap" },
       { "name": "password", "value": "123456" }
     ]
   }
