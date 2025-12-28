@@ -109,7 +109,7 @@ jobs:
           MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/${{ env.APIGEE_ENV }}/' | cut -d/ -f3 | sort -u || true)
           if [ -n "$MODIFIED_PROXIES" ]; then
             for PROXY_NAME in $MODIFIED_PROXIES; do
-              if [ -d "proxies/$PROXY_NAME/apiproxy" ]; then
+              if [ -d "proxies/${{ env.APIGEE_ENV }}/$PROXY_NAME/apiproxy" ]; then
                 echo "🚀 Creating and Deploying Proxy: $PROXY_NAME"
                 apigeecli apis create bundle --name "$PROXY_NAME" \
                   --proxy-folder "proxies/${{ env.APIGEE_ENV }}/$PROXY_NAME/apiproxy" \
