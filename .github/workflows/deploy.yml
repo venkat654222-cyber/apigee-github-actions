@@ -54,33 +54,32 @@
                   --map "$KVM_NAME" -f "$file" --default-token
               done
             fi
-        # 1.5 Manage Modified Target Servers Only
-      - name: Deploy Modified Target Servers
-        run: |
-          # Detect modified Target Server JSONs
-          MODIFIED_TS=$(git diff --name-only HEAD^ HEAD | grep '^configs/target-servers/' | sort -u || true)
+            # 1.5 Manage Modified Target Servers Only
+        - name: Deploy Modified Target Servers
+          run: |
+            # Detect modified Target Server JSONs
+            MODIFIED_TS=$(git diff --name-only HEAD^ HEAD | grep '^configs/target-servers/' | sort -u || true)
 
-        if [ -n "$MODIFIED_TS" ]; then
-          for file in $MODIFIED_TS; do
-            if [ -f "$file" ]; then
-              TS_NAME=$(basename "$file" .json)
-              echo "🚀 Syncing Modified Target Server: $TS_NAME"
+              if [ -n "$MODIFIED_TS" ]; then
+                for file in $MODIFIED_TS; do
+                  if [ -f "$file" ]; then
+                    TS_NAME=$(basename "$file" .json)
+                    echo "🚀 Syncing Modified Target Server: $TS_NAME"
 
-              # Use -f to point to the specific file
-              apigeecli targetservers import \
-                --org ${{ secrets.APIGEE_ORG }} \
-                --env ${{ secrets.APIGEE_ENV }} \
-                -f "$file" \
-                --default-token
-            fi
-          done
-        else
-          echo "No Target Servers modified."
-        fi
-      - name: Deploy Modified Shared Flows
-        run: >
-          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep '^sharedflows/' | cut
-            -d/ -f2 | sort -u || true)
+                    # Use -f to point to the specific file
+                    apigeecli targetservers import \
+                      --org ${{ secrets.APIGEE_ORG }} \
+                      --env ${{ secrets.APIGEE_ENV }} \
+                      -f "$file" \
+                      --default-token
+                  fi
+                done
+              else
+                echo "No Target Servers modified."
+              fi
+        - name: Deploy Modified Shared Flows
+          run: >
+            MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep '^sharedflows/' | cut -d/ -f2 | sort -u || true)
   
             for SF_NAME in $MODIFIED_SFS; do
              # Check if the sharedflowbundle directory exists
@@ -102,9 +101,9 @@
                  --ovr --default-token
              fi
             done
-      - name: Deploy Modified API Proxies
-        run: >
-          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/' | cut
+        - name: Deploy Modified API Proxies
+          run: >
+            MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/' | cut
             -d/ -f2 | sort -u || true)
               
               for PROXY_NAME in $MODIFIED_PROXIES; do
