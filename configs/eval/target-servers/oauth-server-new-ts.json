@@ -1,0 +1,9 @@
+[
+    {
+      "name": "oauth-server-new-ts",
+      "host": "api2.oauth-provider.com",
+      "port": 443,
+      "isEnabled": true,
+      "protocol": "HTTP"
+    }
+  ]

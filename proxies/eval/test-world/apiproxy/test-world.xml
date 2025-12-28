@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<APIProxy revision="1" name="test-world">
+  <DisplayName/>
+  <Description/>
+  <CreatedAt>1766740671688</CreatedAt>
+  <LastModifiedAt>1766740738346</LastModifiedAt>
+  <BasePaths>/test-world</BasePaths>
+  <Policies>
+    <Policy>AM-TestCreds</Policy>
+  </Policies>
+  <ProxyEndpoints>
+    <ProxyEndpoint>default</ProxyEndpoint>
+  </ProxyEndpoints>
+  <TargetEndpoints>
+    <TargetEndpoint>default</TargetEndpoint>
+  </TargetEndpoints>
+</APIProxy>

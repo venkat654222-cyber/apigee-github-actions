@@ -25,6 +25,18 @@ jobs:
           workload_identity_provider: projects/1041995087153/locations/global/workloadIdentityPools/github-pool/providers/github
           service_account: apigee-deploy-sa@bamboo-zone-363116.iam.gserviceaccount.com
 
+      - name: Set Apigee Environment
+        run: |
+          if [[ "${{ github.ref_name }}" == "develop" ]]; then
+            echo "dev" >> $APIGEE_ENV
+          elif [[ "${{ github.ref_name }}" == "test" ]]; then
+            echo "test" >> $APIGEE_ENV
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "eval" >> $APIGEE_ENV
+          else
+            exit 1
+          fi    
+
       - name: Install apigeecli
         run: |
           curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh -o install_apigeecli.sh
@@ -40,13 +52,13 @@ jobs:
 
       - name: Deploy KVMs
         run: |
-          if [ -d "configs/kvms" ] && [ "$(ls -A configs/kvms/*.json 2>/dev/null)" ]; then
-            for file in configs/kvms/*.json; do
+          if [ -d "configs/$APIGEE_ENV/kvms" ] && [ "$(ls -A configs/$APIGEE_ENV/kvms/*.json 2>/dev/null)" ]; then
+            for file in configs/$APIGEE_ENV/kvms/*.json; do
               KVM_NAME=$(basename "$file" .json)
               echo "Processing KVM: $KVM_NAME"
-              apigeecli kvms create --org ${{ secrets.APIGEE_ORG }} --env ${{ secrets.APIGEE_ENV }} \
+              apigeecli kvms create --org ${{ secrets.APIGEE_ORG }} --env $APIGEE_ENV \
                 --name "$KVM_NAME" --default-token || true
-              apigeecli kvms entries import --org ${{ secrets.APIGEE_ORG }} --env ${{ secrets.APIGEE_ENV }} \
+              apigeecli kvms entries import --org ${{ secrets.APIGEE_ORG }} --env $APIGEE_ENV \
                 --map "$KVM_NAME" -f "$file" --default-token
               echo "✅ KVM '$KVM_NAME' synced successfully."
             done
@@ -56,13 +68,13 @@ jobs:
 
       - name: Deploy Modified Target Servers
         run: |
-          MODIFIED_TS=$(git diff --name-only HEAD^ HEAD | grep '^configs/target-servers/' | sort -u || true)
+          MODIFIED_TS=$(git diff --name-only HEAD^ HEAD | grep '^configs/$APIGEE_ENV/target-servers/' | sort -u || true)
           if [ -n "$MODIFIED_TS" ]; then
             for file in $MODIFIED_TS; do
               if [ -f "$file" ]; then
                 TS_NAME=$(basename "$file" .json)
                 echo "🚀 Syncing Modified Target Server: $TS_NAME"
-                apigeecli targetservers import --org ${{ secrets.APIGEE_ORG }} --env ${{ secrets.APIGEE_ENV }} \
+                apigeecli targetservers import --org ${{ secrets.APIGEE_ORG }} --env $APIGEE_ENV \
                   -f "$file" --default-token
                 echo "✅ Target Server '$TS_NAME' deployed successfully."
               fi
@@ -70,46 +82,20 @@ jobs:
           else
             echo "ℹ️ No Target Servers modified in this commit."
           fi
-      - name: Deploy Modified Caches
-        run: |
-          MODIFIED_CACHES=$(git diff --name-only HEAD^ HEAD | grep '^configs/caches/' | sort -u || true)
-          if [ -n "$MODIFIED_CACHES" ]; then
-            for file in $MODIFIED_CACHES; do
-              if [ -f "$file" ]; then
-                CACHE_NAME=$(basename "$file" .json)
-                echo "🚀 Syncing Modified Cache: $CACHE_NAME"
-
-                # Use JQ to parse the JSON file content into variables
-                # Assumes the JSON format you provided previously (array of one object)
-                TIMEOUT=$(jq -r '.[0].expirySettings.timeoutInSec.value' "$file")
-                DESC=$(jq -r '.[0].description' "$file")
-                              
-               apigeecli environments caches create --help
-                
-                echo "✅ Cache '$CACHE_NAME' deployed successfully."
-              fi
-            done
-          else
-            echo "ℹ️ No Cache configurations modified in this commit."
-          fi
-
       
-      # 🟢 Cache Verification Step
-      - name: Verify Deployed Caches
-        run: apigeecli cache list --org ${{ secrets.APIGEE_ORG }} --env ${{ secrets.APIGEE_ENV }} --default-token    
-
+      
       - name: Deploy Modified Shared Flows
         run: |
-          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep '^sharedflows/' | cut -d/ -f2 | sort -u || true)
+          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep '^sharedflows/$APIGEE_ENV' | cut -d/ -f2 | sort -u || true)
           if [ -n "$MODIFIED_SFS" ]; then
             for SF_NAME in $MODIFIED_SFS; do
-              if [ -d "sharedflows/$SF_NAME/sharedflowbundle" ]; then
+              if [ -d "sharedflows/$APIGEE_ENV/$SF_NAME/sharedflowbundle" ]; then
                 echo "🚀 Creating and Deploying Shared Flow: $SF_NAME"
                 apigeecli sharedflows create bundle --name "$SF_NAME" \
                   --sf-folder "sharedflows/$SF_NAME/sharedflowbundle" \
                   --org ${{ secrets.APIGEE_ORG }} --default-token
                 apigeecli sharedflows deploy --name "$SF_NAME" --org ${{ secrets.APIGEE_ORG }} \
-                  --env ${{ secrets.APIGEE_ENV }} --ovr --default-token
+                  --env $APIGEE_ENV --ovr --default-token
                 echo "✅ Shared Flow '$SF_NAME' deployed successfully."
               fi
             done
@@ -119,16 +105,16 @@ jobs:
 
       - name: Deploy Modified API Proxies
         run: |
-          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/' | cut -d/ -f2 | sort -u || true)
+          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/$APIGEE_ENV' | cut -d/ -f2 | sort -u || true)
           if [ -n "$MODIFIED_PROXIES" ]; then
             for PROXY_NAME in $MODIFIED_PROXIES; do
               if [ -d "proxies/$PROXY_NAME/apiproxy" ]; then
                 echo "🚀 Creating and Deploying Proxy: $PROXY_NAME"
                 apigeecli apis create bundle --name "$PROXY_NAME" \
-                  --proxy-folder "proxies/$PROXY_NAME/apiproxy" \
+                  --proxy-folder "proxies/$APIGEE_ENV/$PROXY_NAME/apiproxy" \
                   --org ${{ secrets.APIGEE_ORG }} --default-token
                 apigeecli apis deploy --name "$PROXY_NAME" --org ${{ secrets.APIGEE_ORG }} \
-                  --env ${{ secrets.APIGEE_ENV }} --ovr --default-token
+                  --env $APIGEE_ENV --ovr --default-token
                 echo "✅ API Proxy '$PROXY_NAME' deployed successfully."
               fi
             done
