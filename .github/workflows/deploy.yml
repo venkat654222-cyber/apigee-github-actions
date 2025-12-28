@@ -1,130 +1,110 @@
----
-  name: Apigee X CI/CD (Industry Standard)
-  on:
-    push:
-      branches:
-        - main
-    workflow_dispatch: null
-  jobs:
-    deploy:
-      runs-on: ubuntu-latest
-      permissions:
-        contents: read
-        id-token: write
-      steps:
-        - name: Checkout Repository
-          uses: actions/checkout@v4
-          with:
-            fetch-depth: 0
-        - name: Authenticate to Google Cloud
-          uses: google-github-actions/auth@v2
-          with:
-            workload_identity_provider: projects/1041995087153/locations/global/workloadIdentityPools/github-pool/providers/github
-            service_account: apigee-deploy-sa@bamboo-zone-363116.iam.gserviceaccount.com
-        - name: Install apigeecli
-          run: >
-            # 1. Download the installer to a file
-  
-            curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh -o install_apigeecli.sh
-  
-  
-            # 2. Check if the file was downloaded successfully and is not empty
-  
-            if [ -s install_apigeecli.sh ]; then
-              chmod +x install_apigeecli.sh
-              ./install_apigeecli.sh
-              
-              # 3. Add to GITHUB_PATH for subsequent steps
-              echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
-            else
-              echo "Error: apigeecli installer download failed or file is empty."
-              exit 1
-            fi
-        - name: Deploy KVMs
-          run: >
-            if [ -d "configs/kvms" ]; then
-              for file in configs/kvms/*.json; do
-                KVM_NAME=$(basename "$file" .json)
-                echo "Processing KVM: $KVM_NAME"
-                # Create KVM if not exists
-                apigeecli kvms create --org ${{ secrets.APIGEE_ORG }} --env ${{ secrets.APIGEE_ENV }} \
-                  --name "$KVM_NAME" --default-token || true
-                # Import entries from JSON file
-                apigeecli kvms entries import --org ${{ secrets.APIGEE_ORG }} --env ${{ secrets.APIGEE_ENV }} \
-                  --map "$KVM_NAME" -f "$file" --default-token
-              done
-            fi
-            # 1.5 Manage Modified Target Servers Only
-        - name: Deploy Modified Target Servers
-          run: |
-            # Detect modified Target Server JSONs
-            MODIFIED_TS=$(git diff --name-only HEAD^ HEAD | grep '^configs/target-servers/' | sort -u || true)
+name: Apigee X CI/CD for KVMs, Target Servers, Shared flows and API Proxies
 
-              if [ -n "$MODIFIED_TS" ]; then
-                for file in $MODIFIED_TS; do
-                  if [ -f "$file" ]; then
-                    TS_NAME=$(basename "$file" .json)
-                    echo "🚀 Syncing Modified Target Server: $TS_NAME"
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
-                    # Use -f to point to the specific file
-                    apigeecli targetservers import \
-                      --org ${{ secrets.APIGEE_ORG }} \
-                      --env ${{ secrets.APIGEE_ENV }} \
-                      -f "$file" \
-                      --default-token
-                  fi
-                done
-              else
-                echo "No Target Servers modified."
-              fi
-        - name: Deploy Modified Shared Flows
-          run: >
-            MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep '^sharedflows/' | cut -d/ -f2 | sort -u || true)
-  
-            for SF_NAME in $MODIFIED_SFS; do
-             # Check if the sharedflowbundle directory exists
-             if [ -d "sharedflows/$SF_NAME/sharedflowbundle" ]; then
-               echo "Creating and Deploying Shared Flow: $SF_NAME"
-               
-               # Use --sf-folder to point directly to the sharedflowbundle directory
-               apigeecli sharedflows create bundle \
-                 --name "$SF_NAME" \
-                 --sf-folder "sharedflows/$SF_NAME/sharedflowbundle" \
-                 --org ${{ secrets.APIGEE_ORG }} \
-                 --default-token
-               
-               # Deploy the latest revision
-               apigeecli sharedflows deploy \
-                 --name "$SF_NAME" \
-                 --org ${{ secrets.APIGEE_ORG }} \
-                 --env ${{ secrets.APIGEE_ENV }} \
-                 --ovr --default-token
-             fi
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/1041995087153/locations/global/workloadIdentityPools/github-pool/providers/github
+          service_account: apigee-deploy-sa@bamboo-zone-363116.iam.gserviceaccount.com
+
+      - name: Install apigeecli
+        run: |
+          curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh -o install_apigeecli.sh
+          if [ -s install_apigeecli.sh ]; then
+            chmod +x install_apigeecli.sh
+            ./install_apigeecli.sh
+            echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
+            echo "✅ apigeecli installed successfully."
+          else
+            echo "❌ Error: apigeecli installer download failed."
+            exit 1
+          fi
+
+      - name: Deploy KVMs
+        run: |
+          if [ -d "configs/kvms" ] && [ "$(ls -A configs/kvms/*.json 2>/dev/null)" ]; then
+            for file in configs/kvms/*.json; do
+              KVM_NAME=$(basename "$file" .json)
+              echo "Processing KVM: $KVM_NAME"
+              apigeecli kvms create --org ${{ secrets.APIGEE_ORG }} --env ${{ secrets.APIGEE_ENV }} \
+                --name "$KVM_NAME" --default-token || true
+              apigeecli kvms entries import --org ${{ secrets.APIGEE_ORG }} --env ${{ secrets.APIGEE_ENV }} \
+                --map "$KVM_NAME" -f "$file" --default-token
+              echo "✅ KVM '$KVM_NAME' synced successfully."
             done
-        - name: Deploy Modified API Proxies
-          run: >
-            MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/' | cut
-            -d/ -f2 | sort -u || true)
-              
-              for PROXY_NAME in $MODIFIED_PROXIES; do
-                # Check if the apiproxy directory exists
-                if [ -d "proxies/$PROXY_NAME/apiproxy" ]; then
-                  echo "🚀 Creating and Deploying Proxy: $PROXY_NAME"
-                  
-                  # Standard Fix: Point to the folder that CONTAINS the apiproxy directory
-                  # For many apigeecli versions, this is proxies/$PROXY_NAME/
-                  apigeecli apis create bundle \
-                    --name "$PROXY_NAME" \
-                    --proxy-folder "proxies/$PROXY_NAME/apiproxy" \
-                    --org ${{ secrets.APIGEE_ORG }} \
-                    --default-token
-                  
-                  # Deploy the latest revision
-                  apigeecli apis deploy \
-                    --name "$PROXY_NAME" \
-                    --org ${{ secrets.APIGEE_ORG }} \
-                    --env ${{ secrets.APIGEE_ENV }} \
-                    --ovr --default-token
-                fi
-              done
-  
+          else
+            echo "ℹ️ No KVM configurations found to deploy."
+          fi
+
+      - name: Deploy Modified Target Servers
+        run: |
+          MODIFIED_TS=$(git diff --name-only HEAD^ HEAD | grep '^configs/target-servers/' | sort -u || true)
+          if [ -n "$MODIFIED_TS" ]; then
+            for file in $MODIFIED_TS; do
+              if [ -f "$file" ]; then
+                TS_NAME=$(basename "$file" .json)
+                echo "🚀 Syncing Modified Target Server: $TS_NAME"
+                apigeecli targetservers import --org ${{ secrets.APIGEE_ORG }} --env ${{ secrets.APIGEE_ENV }} \
+                  -f "$file" --default-token
+                echo "✅ Target Server '$TS_NAME' deployed successfully."
+              fi
+            done
+          else
+            echo "ℹ️ No Target Servers modified in this commit."
+          fi
+
+      - name: Deploy Modified Shared Flows
+        run: |
+          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep '^sharedflows/' | cut -d/ -f2 | sort -u || true)
+          if [ -n "$MODIFIED_SFS" ]; then
+            for SF_NAME in $MODIFIED_SFS; do
+              if [ -d "sharedflows/$SF_NAME/sharedflowbundle" ]; then
+                echo "🚀 Creating and Deploying Shared Flow: $SF_NAME"
+                apigeecli sharedflows create bundle --name "$SF_NAME" \
+                  --sf-folder "sharedflows/$SF_NAME/sharedflowbundle" \
+                  --org ${{ secrets.APIGEE_ORG }} --default-token
+                apigeecli sharedflows deploy --name "$SF_NAME" --org ${{ secrets.APIGEE_ORG }} \
+                  --env ${{ secrets.APIGEE_ENV }} --ovr --default-token
+                echo "✅ Shared Flow '$SF_NAME' deployed successfully."
+              fi
+            done
+          else
+            echo "ℹ️ No Shared Flows modified in this commit."
+          fi
+
+      - name: Deploy Modified API Proxies
+        run: |
+          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/' | cut -d/ -f2 | sort -u || true)
+          if [ -n "$MODIFIED_PROXIES" ]; then
+            for PROXY_NAME in $MODIFIED_PROXIES; do
+              if [ -d "proxies/$PROXY_NAME/apiproxy" ]; then
+                echo "🚀 Creating and Deploying Proxy: $PROXY_NAME"
+                apigeecli apis create bundle --name "$PROXY_NAME" \
+                  --proxy-folder "proxies/$PROXY_NAME/apiproxy" \
+                  --org ${{ secrets.APIGEE_ORG }} --default-token
+                apigeecli apis deploy --name "$PROXY_NAME" --org ${{ secrets.APIGEE_ORG }} \
+                  --env ${{ secrets.APIGEE_ENV }} --ovr --default-token
+                echo "✅ API Proxy '$PROXY_NAME' deployed successfully."
+              fi
+            done
+          else
+            echo "ℹ️ No API Proxies modified in this commit."
+          fi
