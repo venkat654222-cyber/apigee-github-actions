@@ -106,7 +106,7 @@ jobs:
 
       - name: Deploy Modified API Proxies
         run: |
-          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/${{ env.APIGEE_ENV }}/' | cut -d/ -f2 | sort -u || true)
+          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/${{ env.APIGEE_ENV }}/' | cut -d/ -f3 | sort -u || true)
           if [ -n "$MODIFIED_PROXIES" ]; then
             for PROXY_NAME in $MODIFIED_PROXIES; do
               if [ -d "proxies/$PROXY_NAME/apiproxy" ]; then
