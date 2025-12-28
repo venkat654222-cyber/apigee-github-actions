@@ -86,18 +86,10 @@ jobs:
                 
                 # Try to create the cache first. If it fails (already exists), then update it.
                 # Note: 'create' only accepts flags, not a file input.
-                apigeecli cache create \
+                apigeecli environments caches create \
                   --name "$CACHE_NAME" \
-                  --org ${{ secrets.APIGEE_ORG }} \
-                  --env ${{ secrets.APIGEE_ENV }} \
-                  --timeout "$TIMEOUT" \
-                  --desc "$DESC" \
-                  --default-token || \
-                apigeecli cache update \
-                  --name "$CACHE_NAME" \
-                  --org ${{ secrets.APIGEE_ORG }} \
-                  --env ${{ secrets.APIGEE_ENV }} \
-                  --timeout "$TIMEOUT" \
+                  --org "${{ secrets.APIGEE_ORG }}" \
+                  --env "${{ secrets.APIGEE_ENV }}" \
                   --desc "$DESC" \
                   --default-token
                 
