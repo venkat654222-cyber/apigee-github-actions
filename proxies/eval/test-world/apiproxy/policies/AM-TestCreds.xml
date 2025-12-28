@@ -14,7 +14,7 @@
   </Copy>
   <Remove>
     <Headers>
-      <Header name="test-headddderdddd-csshange-done-delete"/>
+      <Header name="test-ssheadddderdddd-csshange-done-delete"/>
     </Headers>
     <QueryParams>
       <QueryParam name="q13344339ee999"/>
