@@ -93,7 +93,7 @@ jobs:
               if [ -d "sharedflows/${{ env.APIGEE_ENV }}/$SF_NAME/sharedflowbundle" ]; then
                 echo "🚀 Creating and Deploying Shared Flow: $SF_NAME"
                 apigeecli sharedflows create bundle --name "$SF_NAME" \
-                  --sf-folder "sharedflows/$SF_NAME/sharedflowbundle" \
+                  --sf-folder "sharedflows/${{ env.APIGEE_ENV }}$SF_NAME/sharedflowbundle" \
                   --org ${{ secrets.APIGEE_ORG }} --default-token
                 apigeecli sharedflows deploy --name "$SF_NAME" --org ${{ secrets.APIGEE_ORG }} \
                   --env ${{ env.APIGEE_ENV }} --ovr --default-token
