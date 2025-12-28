@@ -72,21 +72,33 @@ jobs:
           fi
       - name: Deploy Modified Caches
         run: |
-          # Detect modified Cache JSONs
           MODIFIED_CACHES=$(git diff --name-only HEAD^ HEAD | grep '^configs/caches/' | sort -u || true)
-
           if [ -n "$MODIFIED_CACHES" ]; then
             for file in $MODIFIED_CACHES; do
               if [ -f "$file" ]; then
                 CACHE_NAME=$(basename "$file" .json)
                 echo "🚀 Syncing Modified Cache: $CACHE_NAME"
 
-                # Import the Cache configuration
-                # apigeecli caches import handles both create and update
-                apigeecli cache import \
+                # Use JQ to parse the JSON file content into variables
+                # Assumes the JSON format you provided previously (array of one object)
+                TIMEOUT=$(jq -r '.[0].expirySettings.timeoutInSec.value' "$file")
+                DESC=$(jq -r '.[0].description' "$file")
+                
+                # Try to create the cache first. If it fails (already exists), then update it.
+                # Note: 'create' only accepts flags, not a file input.
+                apigeecli cache create \
+                  --name "$CACHE_NAME" \
                   --org ${{ secrets.APIGEE_ORG }} \
                   --env ${{ secrets.APIGEE_ENV }} \
-                  -f "$file" \
+                  --timeout "$TIMEOUT" \
+                  --desc "$DESC" \
+                  --default-token || \
+                apigeecli cache update \
+                  --name "$CACHE_NAME" \
+                  --org ${{ secrets.APIGEE_ORG }} \
+                  --env ${{ secrets.APIGEE_ENV }} \
+                  --timeout "$TIMEOUT" \
+                  --desc "$DESC" \
                   --default-token
                 
                 echo "✅ Cache '$CACHE_NAME' deployed successfully."
@@ -95,6 +107,7 @@ jobs:
           else
             echo "ℹ️ No Cache configurations modified in this commit."
           fi
+
       
       # 🟢 Cache Verification Step
       - name: Verify Deployed Caches

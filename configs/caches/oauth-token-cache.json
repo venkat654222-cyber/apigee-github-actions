@@ -4,7 +4,7 @@
       "description": "Cache for OAuth tokens",
       "expirySettings": {
         "timeoutInSec": {
-          "value": "3599"
+          "value": "3600"
         }
       },
       "skipCacheIfElementSizeInKBExceeded": "1024"
