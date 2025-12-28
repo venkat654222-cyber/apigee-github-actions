@@ -87,7 +87,7 @@ jobs:
       
       - name: Deploy Modified Shared Flows
         run: |
-          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep '^sharedflows/${{ env.APIGEE_ENV }}' | cut -d/ -f2 | sort -u || true)
+          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep '^sharedflows/${{ env.APIGEE_ENV }}/' | cut -d/ -f2 | sort -u || true)
           if [ -n "$MODIFIED_SFS" ]; then
             for SF_NAME in $MODIFIED_SFS; do
               if [ -d "sharedflows/${{ env.APIGEE_ENV }}/$SF_NAME/sharedflowbundle" ]; then
@@ -106,7 +106,7 @@ jobs:
 
       - name: Deploy Modified API Proxies
         run: |
-          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/${{ env.APIGEE_ENV }}' | cut -d/ -f2 | sort -u || true)
+          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/${{ env.APIGEE_ENV }}/' | cut -d/ -f2 | sort -u || true)
           if [ -n "$MODIFIED_PROXIES" ]; then
             for PROXY_NAME in $MODIFIED_PROXIES; do
               if [ -d "proxies/$PROXY_NAME/apiproxy" ]; then
