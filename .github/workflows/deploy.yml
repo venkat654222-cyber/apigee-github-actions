@@ -83,7 +83,7 @@ jobs:
 
                 # Import the Cache configuration
                 # apigeecli caches import handles both create and update
-                apigeecli caches import \
+                apigeecli cache import \
                   --org ${{ secrets.APIGEE_ORG }} \
                   --env ${{ secrets.APIGEE_ENV }} \
                   -f "$file" \
@@ -98,7 +98,7 @@ jobs:
       
       # 🟢 Cache Verification Step
       - name: Verify Deployed Caches
-        run: apigeecli caches list --org ${{ secrets.APIGEE_ORG }} --env ${{ secrets.APIGEE_ENV }} --default-token    
+        run: apigeecli cache list --org ${{ secrets.APIGEE_ORG }} --env ${{ secrets.APIGEE_ENV }} --default-token    
 
       - name: Deploy Modified Shared Flows
         run: |
