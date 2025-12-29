@@ -40,9 +40,10 @@ jobs:
 
       - name: Install latest apigeecli
         run: |
-          go install github.com/apigee/apigeecli@latest
-          echo "$HOME/go/bin" >> $GITHUB_PATH
+          curl -s https://raw.githubusercontent.com/apigee/apigeecli/main/install.sh | bash
+          echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
           apigeecli version
+
 
       - name: Sync Keystores
         run: |
