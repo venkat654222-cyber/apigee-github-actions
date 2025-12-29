@@ -92,7 +92,6 @@ jobs:
               apigeecli keystores aliases create \
                 --org ${{ secrets.APIGEE_ORG }} \
                 --env ${{ env.APIGEE_ENV }} \                
-                --name "$ALIAS_NAME" \
                 --format pkcs12 \
                 --p12 "$LOCAL_FILENAME" \
                 --password "$CLEAN_PWD" \
