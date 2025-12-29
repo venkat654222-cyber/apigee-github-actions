@@ -27,7 +27,7 @@ jobs:
 
       - name: Set Apigee Environment
         run: |
-          if [[ "${{ github.ref_name }}" == "develop" ]]; then
+          if [[ "${{ github.ref_name }}" == "dev" ]]; then
             echo "APIGEE_ENV=dev" >> $GITHUB_ENV
           elif [[ "${{ github.ref_name }}" == "test" ]]; then
             echo "APIGEE_ENV=test" >> $GITHUB_ENV
