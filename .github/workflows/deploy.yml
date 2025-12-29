@@ -51,55 +51,54 @@ jobs:
             exit 1
           fi
       
-      - name: Sync Dynamic Keystores (Double Base64 Decode)
+      - name: Sync Keystores
         run: |
           KS_JSON="configs/${{ env.APIGEE_ENV }}/keystores/keystores.json"
-          
-          if [ ! -f "$KS_JSON" ]; then
-            echo "ℹ️ No keystores.json found for ${{ env.APIGEE_ENV }}."
-            exit 0
-          fi
 
+          # 1. Iterate through the JSON array
           for row in $(jq -r '.[] | @base64' "$KS_JSON"); do
             _jq() {
               echo "${row}" | base64 -d | jq -r "${1}"
             }
 
-            # Placeholder names (e.g. identity_pfx)
+            # Extract placeholders (e.g., identity_pfx and identity_password)
             FILE_VAR_NAME=$(_jq '.file' | tr -d '$')
             PWD_VAR_NAME=$(_jq '.password' | tr -d '$')
             ALIAS_NAME=$(_jq '.alias')
 
             echo "🔑 Processing Alias: $ALIAS_NAME"
 
-            # 1. Fetch and Decode File Content from GSM
+            # 2. Retrieve B64 from GSM and Decode FILE to disk
+            # apigeecli needs a path to a file, not the raw data
             FILE_B64=$(gcloud secrets versions access latest --secret="$FILE_VAR_NAME")
             LOCAL_FILENAME="${ALIAS_NAME}.bin"
             echo "$FILE_B64" | base64 -d > "$LOCAL_FILENAME"
+            
+            # Export the path so envsubst can update the JSON
             export "$FILE_VAR_NAME"="$LOCAL_FILENAME"
 
-            # 2. Fetch and Decode Password from GSM
+            # 3. Retrieve B64 from GSM and Decode PASSWORD to shell var
             PWD_B64=$(gcloud secrets versions access latest --secret="$PWD_VAR_NAME")
             export "$PWD_VAR_NAME"=$(echo "$PWD_B64" | base64 -d)
           done
 
-          # 3. Finalize the JSON with filenames and decoded passwords
+          # 4. Finalize the JSON (Injecting filenames and passwords)
           envsubst < "$KS_JSON" > keystores_final.json
 
-          # 4. Correct 2025 Command Paths
+          # 5. Import using the correct apigeecli 2025 hierarchy
           KS_NAME=$(basename "$KS_JSON" .json)
           
-          # Use 'environments keystores create'
-          apigeecli keystores create \
-            --name "$KS_NAME" \
-            --env "${{ env.APIGEE_ENV }}" \
-            --org "${{ secrets.APIGEE_ORG }}" \
-            --default-token || true
-           # 2. Import the aliases (Uses --keystore)
-          apigeecli keystores aliases import --help
+          # Create container if missing
+          apigeecli keystores create --name "$KS_NAME" \
+            -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} --default-token || true
 
-          # 5. Cleanup
-          rm keystores_final.json *.bin 2>/dev/null || true
+          # Import aliases (uses the file path from your finalized JSON)
+          apigeecli keystores aliases import --keystore "$KS_NAME" \
+            -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} \
+            -f keystores_final.json --default-token
+
+          # 6. Cleanup
+          rm keystores_final.json *.bin
 
       - name: Deploy KVMs
         run: |
