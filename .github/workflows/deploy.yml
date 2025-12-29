@@ -38,9 +38,11 @@ jobs:
             exit 1
           fi
 
-      - name: Install latest apigeecli
+      - name: Install apigeecli
         run: |
-          curl -s https://raw.githubusercontent.com/apigee/apigeecli/main/install.sh | bash
+          curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh -o install_apigeecli.sh
+          chmod +x install_apigeecli.sh
+          ./install_apigeecli.sh
           echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
           apigeecli version
 
@@ -79,16 +81,12 @@ jobs:
             CLEAN_PWD=$(echo "$PWD_B64" | base64 -d)
 
             # 5. Import alias using latest apigeecli
-            apigeecli keystores aliases import \
-              --org "${{ secrets.APIGEE_ORG }}" \
-              --env "${{ env.APIGEE_ENV }}" \
-              --keystore "$KS_NAME" \
-              --alias "$ALIAS_NAME" \
-              --file "$LOCAL_FILENAME" \
-              --password "$CLEAN_PWD" \
-              --format pkcs12 \
-              --default-token || true
-          done
+            apigeecli keystores import \
+            --org "$ORG" \
+            --env "$ENV" \
+            -f keystores/keystores.json \
+            --default-token
+                   
 
           # 6. Cleanup sensitive files
           rm -f *.p12
