@@ -93,9 +93,12 @@ jobs:
             -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} --default-token || true
 
           # Import aliases (uses the file path from your finalized JSON)
-          apigeecli keystores aliases import --keystore "$KS_NAME" \
-            -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} \
-            -f keystores_final.json --default-token
+          apigeecli keystores aliases import \
+            -k "$KS_NAME" \
+            -o "${{ secrets.APIGEE_ORG }}" \
+            -e "${{ env.APIGEE_ENV }}" \
+            -f keystores_final.json \
+            --default-token
 
           # 6. Cleanup
           rm keystores_final.json *.bin
