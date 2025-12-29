@@ -58,7 +58,7 @@ jobs:
 
           # 1. Create the Keystore container if it doesn't exist
           apigeecli keystores create --name "$KS_NAME" \
-            -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} --token $TOKEN || true
+            -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} --default-token || true
 
           # 2. Iterate through the JSON array to decode secrets and import
           for row in $(jq -r '.[] | @base64' "$KS_JSON"); do
@@ -92,7 +92,7 @@ jobs:
               --format pkcs12 \
               --p12 "$LOCAL_FILENAME" \
               --password "$CLEAN_PWD" \
-              --token $TOKEN
+              --default-token || true
 
           done
 
