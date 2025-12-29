@@ -68,36 +68,7 @@ jobs:
             apigeecli keystores create --name "$KS_NAME" \
               -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} --token $TOKEN || true
 
-            # 2. Loop through Aliases within this Keystore
-            for alias_row in $(_ks_jq '.aliases[] | @base64'); do
-              _alias_jq() { echo "${alias_row}" | base64 -d | jq -r "${1}"; }
-
-              ALIAS_NAME=$(_alias_jq '.alias')
-              FILE_VAR_NAME=$(_alias_jq '.file' | tr -d '$')
-              PWD_VAR_NAME=$(_alias_jq '.password' | tr -d '$')
-
-              echo "  🔑 Processing Alias: $ALIAS_NAME"
-
-              # 3. Retrieve and decode PKCS12 file from GSM
-              FILE_B64=$(gcloud secrets versions access latest --secret="$FILE_VAR_NAME")
-              LOCAL_FILENAME="${ALIAS_NAME}.p12"
-              echo "$FILE_B64" | base64 -d > "$LOCAL_FILENAME"
-
-              # 4. Retrieve and decode password from GSM
-              PWD_B64=$(gcloud secrets versions access latest --secret="$PWD_VAR_NAME")
-              CLEAN_PWD=$(echo "$PWD_B64" | base64 -d)
-
-              # 5. Import alias using apigeecli 2025 hierarchy
-              # Note: 'import' command usually handles folders; for specific files, 'aliases create' is preferred.
-              apigeecli keystores aliases create \
-                --org ${{ secrets.APIGEE_ORG }} \
-                --env ${{ env.APIGEE_ENV }} \      
-                --default-token
-
-              # Cleanup binary after each import
-              rm -f "$LOCAL_FILENAME"
-            done
-          done
+           
 
       - name: Deploy KVMs
         run: |
