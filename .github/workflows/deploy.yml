@@ -83,16 +83,15 @@ jobs:
             CLEAN_PWD=$(echo "$PWD_B64" | base64 -d)
 
             # 5. Import Alias into Apigee using apigeecli
-           apigeecli keystores aliases import \
+           apigeecli keystores import \
             --org "${{ secrets.APIGEE_ORG }}" \
             --env "${{ env.APIGEE_ENV }}" \
-            --keystore "$KS_NAME" \
+            --name "$KS_NAME" \
             --alias "$ALIAS_NAME" \
             --file "$LOCAL_FILENAME" \
             --password "$CLEAN_PWD" \
             --format pkcs12 \
             --default-token || true
-
           done
 
           # 6. Cleanup sensitive files
