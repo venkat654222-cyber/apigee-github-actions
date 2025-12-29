@@ -84,10 +84,9 @@ jobs:
 
             # 5. Import Alias into Apigee using apigeecli
             # Format is set to 'pkcs12' for .p12/.pfx files
-            apigeecli keystores aliases create  \
+            apigeecli keystores aliases import  \
               --env ${{ env.APIGEE_ENV }} \
               --org ${{ secrets.APIGEE_ORG }} \             
-              --password "$CLEAN_PWD" \
               --default-token || true
 
           done
