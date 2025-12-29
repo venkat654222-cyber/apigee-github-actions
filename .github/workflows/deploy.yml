@@ -90,12 +90,11 @@ jobs:
           KS_NAME=$(basename "$KS_JSON" .json)
           
           # Use 'environments keystores create'
-          apigeecli environments keystores create \
+          apigeecli keystores create \
             --name "$KS_NAME" \
-            --org "${{ secrets.APIGEE_ORG }}" \
             --env "${{ env.APIGEE_ENV }}" \
+            --org "${{ secrets.APIGEE_ORG }}" \
             --default-token || true
-
           # Use 'environments keystores aliases import'
           apigeecli environments keystores aliases import \
             --keystore "$KS_NAME" \
