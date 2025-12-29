@@ -87,7 +87,7 @@ jobs:
             apigeecli keystores aliases import  \
               --env ${{ env.APIGEE_ENV }} \
               --org ${{ secrets.APIGEE_ORG }} \             
-              --default-token || true
+              --token || true
 
           done
 
