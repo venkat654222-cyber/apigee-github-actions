@@ -50,6 +50,58 @@ jobs:
             echo "❌ Error: apigeecli installer download failed."
             exit 1
           fi
+      
+      - name: Sync Dynamic Keystores (Double Base64 Decode)
+        run: |
+          KS_JSON="configs/${{ env.APIGEE_ENV }}/keystores/keystores.json"
+
+          # 1. Loop through each object in the JSON array using jq
+          # We use @base64 to handle complex JSON objects in a bash loop
+          for row in $(jq -r '.[] | @base64' "$KS_JSON"); do
+            _jq() {
+              echo "${row}" | base64 -d | jq -r "${1}"
+            }
+
+            # Extract variable names from JSON (stripping the '$' to get Secret IDs)
+            FILE_SECRET_ID=$(_jq '.file' | tr -d '$')
+            PWD_SECRET_ID=$(_jq '.password' | tr -d '$')
+            ALIAS_NAME=$(_jq '.alias')
+
+            echo "🔑 Fetching and decoding secrets for alias: $ALIAS_NAME"
+
+            # 2. Retrieve and DECODE the File Content from GSM
+            # Store it as a physical file on the runner's disk
+            FILE_B64=$(gcloud secrets versions access latest --secret="$FILE_SECRET_ID")
+            LOCAL_FILENAME="${ALIAS_NAME}.bin"
+            echo "$FILE_B64" | base64 -d > "$LOCAL_FILENAME"
+            
+            # Export the path so envsubst puts the filename in the JSON
+            export "$FILE_SECRET_ID"="$LOCAL_FILENAME"
+
+            # 3. Retrieve and DECODE the Password from GSM
+            # Decode into a shell variable for envsubst to use
+            PWD_B64=$(gcloud secrets versions access latest --secret="$PWD_SECRET_ID")
+            export "$PWD_SECRET_ID"=$(echo "$PWD_B64" | base64 -d)
+          done
+
+          # 4. Finalize the JSON with filenames and decoded passwords
+          envsubst < "$KS_JSON" > keystores_final.json
+
+          # 5. Deploy to Apigee
+          KS_NAME=$(basename "$KS_JSON" .json)
+          
+          # Create container if it doesn't exist
+          apigeecli environments keystores create --name "$KS_NAME" \
+            -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} --default-token || true
+
+          # Import all aliases using the temporary file
+          apigeecli environments keystores aliases import \
+            --keystore "$KS_NAME" \
+            -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} \
+            -f keystores_final.json --default-token
+
+          # 6. Final Cleanup
+          rm keystores_final.json *.bin
 
       - name: Deploy KVMs
         run: |
