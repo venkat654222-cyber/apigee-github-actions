@@ -3,7 +3,7 @@ name: Apigee X CI/CD for KVMs, Target Servers, Shared flows and API Proxies
 on:
   push:
     branches:
-      - dev
+      - main
   workflow_dispatch:
 
 jobs:
