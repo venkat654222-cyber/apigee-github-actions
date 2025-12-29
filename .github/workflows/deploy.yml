@@ -96,7 +96,7 @@ jobs:
             apigeecli keystores aliases import \
             --org "${{ secrets.APIGEE_ORG }}" \
             --env "${{ env.APIGEE_ENV }}" \
-            --file keystores_final.json \
+            -f keystores_final.json \
             --default-token
 
           # 6. Cleanup
