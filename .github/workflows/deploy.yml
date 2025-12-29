@@ -40,8 +40,8 @@ jobs:
 
       - name: Install latest apigeecli
         run: |
-          curl -L https://github.com/apigee/apigeecli/releases/latest/download/apigeecli_linux_amd64.tar.gz | tar zx
-          sudo mv apigeecli /usr/local/bin/apigeecli
+          go install github.com/apigee/apigeecli@latest
+          echo "$HOME/go/bin" >> $GITHUB_PATH
           apigeecli version
 
       - name: Sync Keystores
