@@ -51,48 +51,64 @@ jobs:
             exit 1
           fi
       
-      - name: Sync Dynamic Keystores 
+      - name: Sync Dynamic Keystores (Double Base64 Decode)
         run: |
           KS_JSON="configs/${{ env.APIGEE_ENV }}/keystores/keystores.json"
+          
+          if [ ! -f "$KS_JSON" ]; then
+            echo "ℹ️ No keystores.json found for ${{ env.APIGEE_ENV }}."
+            exit 0
+          fi
 
+          # 1. Loop through each object in the JSON array using jq
           for row in $(jq -r '.[] | @base64' "$KS_JSON"); do
             _jq() {
               echo "${row}" | base64 -d | jq -r "${1}"
             }
 
-            # 🛠 FIX: Extract placeholders and ensure they use underscores for shell compatibility
-            # Example: $identity-pfx -> identity_pfx
-            FILE_SECRET_ID=$(_jq '.file' | tr -d '$' | tr '-' '_')
-            PWD_SECRET_ID=$(_jq '.password' | tr -d '$' | tr '-' '_')
+            # Extract variable names and sanitize hyphens to underscores for shell
+            FILE_VAR=$(_jq '.file' | tr -d '$' | tr '-' '_')
+            PWD_VAR=$(_jq '.password' | tr -d '$' | tr '-' '_')
             ALIAS_NAME=$(_jq '.alias')
 
-            echo "🔑 Processing: $ALIAS_NAME"
+            echo "🔑 Processing Alias: $ALIAS_NAME"
 
-            # 1. Retrieve and Decode File
-            # Make sure your GSM Secret name matches the sanitzed ID (identity_pfx)
-            FILE_B64=$(gcloud secrets versions access latest --secret="$FILE_SECRET_ID")
+            # 2. Retrieve and Decode File Content from GSM
+            # Logic: GSM (B64 String) -> Decode -> Physical File (.bin)
+            FILE_B64=$(gcloud secrets versions access latest --secret="$FILE_VAR")
             LOCAL_FILENAME="${ALIAS_NAME}.bin"
             echo "$FILE_B64" | base64 -d > "$LOCAL_FILENAME"
-            export "$FILE_SECRET_ID"="$LOCAL_FILENAME"
+            export "$FILE_VAR"="$LOCAL_FILENAME"
 
-            # 2. Retrieve and Decode Password
-            PWD_B64=$(gcloud secrets versions access latest --secret="$PWD_SECRET_ID")
-            export "$PWD_SECRET_ID"=$(echo "$PWD_B64" | base64 -d)
+            # 3. Retrieve and Decode Password from GSM
+            # Logic: GSM (B64 String) -> Decode -> Plain Text Variable
+            PWD_B64=$(gcloud secrets versions access latest --secret="$PWD_VAR")
+            export "$PWD_VAR"=$(echo "$PWD_B64" | base64 -d)
           done
 
-          # 3. Finalize JSON and Deploy
+          # 4. Finalize JSON via envsubst
           envsubst < "$KS_JSON" > keystores_final.json
-          
-          KS_NAME=$(basename "$KS_JSON" .json)
-          apigeecli environments keystores create --name "$KS_NAME" \
-            -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} --default-token || true
 
+          # 5. Correct 2025 Command Hierarchy for apigeecli
+          KS_NAME=$(basename "$KS_JSON" .json)
+          
+          # Ensure Keystore container exists
+          apigeecli environments keystores create \
+            --name "$KS_NAME" \
+            --org "${{ secrets.APIGEE_ORG }}" \
+            --env "${{ env.APIGEE_ENV }}" \
+            --default-token || true
+
+          # Import all aliases from the final JSON
           apigeecli environments keystores aliases import \
             --keystore "$KS_NAME" \
-            -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} \
-            -f keystores_final.json --default-token
+            --org "${{ secrets.APIGEE_ORG }}" \
+            --env "${{ env.APIGEE_ENV }}" \
+            --file keystores_final.json \
+            --default-token
 
-          rm keystores_final.json *.bin
+          # 6. Final Cleanup
+          rm keystores_final.json *.bin 2>/dev/null || true
 
       - name: Deploy KVMs
         run: |
