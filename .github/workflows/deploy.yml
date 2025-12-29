@@ -36,62 +36,57 @@ jobs:
           else
             echo "Unsupported branch: ${{ github.ref_name }}"
             exit 1
-          fi   
-
-      - name: Install apigeecli
-        run: |
-          curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh -o install_apigeecli.sh
-          if [ -s install_apigeecli.sh ]; then
-            chmod +x install_apigeecli.sh
-            ./install_apigeecli.sh
-            echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
-            echo "✅ apigeecli installed successfully."
-          else
-            echo "❌ Error: apigeecli installer download failed."
-            exit 1
           fi
-      
+
+      - name: Install latest apigeecli
+        run: |
+          curl -L https://github.com/apigee/apigeecli/releases/latest/download/apigeecli_linux_amd64.tar.gz | tar zx
+          sudo mv apigeecli /usr/local/bin/apigeecli
+          apigeecli version
+
       - name: Sync Keystores
         run: |
           KS_JSON="configs/${{ env.APIGEE_ENV }}/keystores/keystores.json"
           KS_NAME=$(basename "$KS_JSON" .json)
 
           # 1. Create the Keystore container if it doesn't exist
-          apigeecli keystores create --name "$KS_NAME" \
-            -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} --default-token || true
+          apigeecli keystores create \
+            --name "$KS_NAME" \
+            --org "${{ secrets.APIGEE_ORG }}" \
+            --env "${{ env.APIGEE_ENV }}" \
+            --default-token || true
 
-          # 2. Iterate through the JSON array to decode secrets and import
+          # 2. Iterate through the JSON array to decode secrets and import aliases
           for row in $(jq -r '.[] | @base64' "$KS_JSON"); do
             _jq() {
               echo "${row}" | base64 -d | jq -r "${1}"
             }
 
-            # Extract variable names from JSON
             FILE_VAR_NAME=$(_jq '.file' | tr -d '$')
             PWD_VAR_NAME=$(_jq '.password' | tr -d '$')
             ALIAS_NAME=$(_jq '.alias')
 
             echo "🔑 Processing Alias: $ALIAS_NAME"
 
-            # 3. Retrieve and Decode PKCS12 file from GSM
+            # 3. Retrieve and decode PKCS12 file from GSM
             FILE_B64=$(gcloud secrets versions access latest --secret="$FILE_VAR_NAME")
             LOCAL_FILENAME="${ALIAS_NAME}.p12"
             echo "$FILE_B64" | base64 -d > "$LOCAL_FILENAME"
-            
-            # 4. Retrieve and Decode PASSWORD from GSM
+
+            # 4. Retrieve and decode password from GSM
             PWD_B64=$(gcloud secrets versions access latest --secret="$PWD_VAR_NAME")
             CLEAN_PWD=$(echo "$PWD_B64" | base64 -d)
 
-            # 5. Import Alias into Apigee using apigeecli
-           apigeecli keystores import \
-            --org "${{ secrets.APIGEE_ORG }}" \
-            --env "${{ env.APIGEE_ENV }}" \
-            --name "$KS_NAME" \
-            --alias "$ALIAS_NAME" \
-            --file "$LOCAL_FILENAME" \
-            --password "$CLEAN_PWD" \
-            --format pkcs12 \
-            --default-token || true
+            # 5. Import alias using latest apigeecli
+            apigeecli keystores aliases import \
+              --org "${{ secrets.APIGEE_ORG }}" \
+              --env "${{ env.APIGEE_ENV }}" \
+              --keystore "$KS_NAME" \
+              --alias "$ALIAS_NAME" \
+              --file "$LOCAL_FILENAME" \
+              --password "$CLEAN_PWD" \
+              --format pkcs12 \
+              --default-token || true
           done
 
           # 6. Cleanup sensitive files
@@ -103,10 +98,17 @@ jobs:
             for file in configs/${{ env.APIGEE_ENV }}/kvms/*.json; do
               KVM_NAME=$(basename "$file" .json)
               echo "Processing KVM: $KVM_NAME"
-              apigeecli kvms create --org ${{ secrets.APIGEE_ORG }} --env ${{ env.APIGEE_ENV }} \
-                --name "$KVM_NAME" --default-token || true
-              apigeecli kvms entries import --org ${{ secrets.APIGEE_ORG }} --env ${{ env.APIGEE_ENV }} \
-                --map "$KVM_NAME" -f "$file" --default-token
+              apigeecli kvms create \
+                --org "${{ secrets.APIGEE_ORG }}" \
+                --env "${{ env.APIGEE_ENV }}" \
+                --name "$KVM_NAME" \
+                --default-token || true
+              apigeecli kvms entries import \
+                --org "${{ secrets.APIGEE_ORG }}" \
+                --env "${{ env.APIGEE_ENV }}" \
+                --map "$KVM_NAME" \
+                -f "$file" \
+                --default-token
               echo "✅ KVM '$KVM_NAME' synced successfully."
             done
           else
@@ -115,34 +117,40 @@ jobs:
 
       - name: Deploy Modified Target Servers
         run: |
-          MODIFIED_TS=$(git diff --name-only HEAD^ HEAD | grep '^configs/${{ env.APIGEE_ENV }}/target-servers/' | sort -u || true)
+          MODIFIED_TS=$(git diff --name-only HEAD^ HEAD | grep "^configs/${{ env.APIGEE_ENV }}/target-servers/" | sort -u || true)
           if [ -n "$MODIFIED_TS" ]; then
             for file in $MODIFIED_TS; do
-              if [ -f "$file" ]; then
-                TS_NAME=$(basename "$file" .json)
-                echo "🚀 Syncing Modified Target Server: $TS_NAME"
-                apigeecli targetservers import --org ${{ secrets.APIGEE_ORG }} --env ${{ env.APIGEE_ENV }} \
-                  -f "$file" --default-token
-                echo "✅ Target Server '$TS_NAME' deployed successfully."
-              fi
+              TS_NAME=$(basename "$file" .json)
+              echo "🚀 Syncing Modified Target Server: $TS_NAME"
+              apigeecli targetservers import \
+                --org "${{ secrets.APIGEE_ORG }}" \
+                --env "${{ env.APIGEE_ENV }}" \
+                -f "$file" \
+                --default-token
+              echo "✅ Target Server '$TS_NAME' deployed successfully."
             done
           else
             echo "ℹ️ No Target Servers modified in this commit."
           fi
-      
-      
+
       - name: Deploy Modified Shared Flows
         run: |
-          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep '^sharedflows/${{ env.APIGEE_ENV }}/' | cut -d/ -f3 | sort -u || true)
+          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep "^sharedflows/${{ env.APIGEE_ENV }}/" | cut -d/ -f3 | sort -u || true)
           if [ -n "$MODIFIED_SFS" ]; then
             for SF_NAME in $MODIFIED_SFS; do
               if [ -d "sharedflows/${{ env.APIGEE_ENV }}/$SF_NAME/sharedflowbundle" ]; then
                 echo "🚀 Creating and Deploying Shared Flow: $SF_NAME"
-                apigeecli sharedflows create bundle --name "$SF_NAME" \
+                apigeecli sharedflows create bundle \
+                  --name "$SF_NAME" \
                   --sf-folder "sharedflows/${{ env.APIGEE_ENV }}/$SF_NAME/sharedflowbundle" \
-                  --org ${{ secrets.APIGEE_ORG }} --default-token
-                apigeecli sharedflows deploy --name "$SF_NAME" --org ${{ secrets.APIGEE_ORG }} \
-                  --env ${{ env.APIGEE_ENV }} --ovr --default-token
+                  --org "${{ secrets.APIGEE_ORG }}" \
+                  --default-token
+                apigeecli sharedflows deploy \
+                  --name "$SF_NAME" \
+                  --org "${{ secrets.APIGEE_ORG }}" \
+                  --env "${{ env.APIGEE_ENV }}" \
+                  --ovr \
+                  --default-token
                 echo "✅ Shared Flow '$SF_NAME' deployed successfully."
               fi
             done
@@ -152,16 +160,22 @@ jobs:
 
       - name: Deploy Modified API Proxies
         run: |
-          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep '^proxies/${{ env.APIGEE_ENV }}/' | cut -d/ -f3 | sort -u || true)
+          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep "^proxies/${{ env.APIGEE_ENV }}/" | cut -d/ -f3 | sort -u || true)
           if [ -n "$MODIFIED_PROXIES" ]; then
             for PROXY_NAME in $MODIFIED_PROXIES; do
               if [ -d "proxies/${{ env.APIGEE_ENV }}/$PROXY_NAME/apiproxy" ]; then
                 echo "🚀 Creating and Deploying Proxy: $PROXY_NAME"
-                apigeecli apis create bundle --name "$PROXY_NAME" \
+                apigeecli apis create bundle \
+                  --name "$PROXY_NAME" \
                   --proxy-folder "proxies/${{ env.APIGEE_ENV }}/$PROXY_NAME/apiproxy" \
-                  --org ${{ secrets.APIGEE_ORG }} --default-token
-                apigeecli apis deploy --name "$PROXY_NAME" --org ${{ secrets.APIGEE_ORG }} \
-                  --env ${{ env.APIGEE_ENV }} --ovr --default-token
+                  --org "${{ secrets.APIGEE_ORG }}" \
+                  --default-token
+                apigeecli apis deploy \
+                  --name "$PROXY_NAME" \
+                  --org "${{ secrets.APIGEE_ORG }}" \
+                  --env "${{ env.APIGEE_ENV }}" \
+                  --ovr \
+                  --default-token
                 echo "✅ API Proxy '$PROXY_NAME' deployed successfully."
               fi
             done
