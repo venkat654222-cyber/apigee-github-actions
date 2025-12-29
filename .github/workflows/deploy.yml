@@ -91,8 +91,7 @@ jobs:
               # Note: 'import' command usually handles folders; for specific files, 'aliases create' is preferred.
               apigeecli keystores aliases create \
                 --org ${{ secrets.APIGEE_ORG }} \
-                --env ${{ env.APIGEE_ENV }} \        
-                --password "$CLEAN_PWD" \
+                --env ${{ env.APIGEE_ENV }} \      
                 --token "$TOKEN"
 
               # Cleanup binary after each import
