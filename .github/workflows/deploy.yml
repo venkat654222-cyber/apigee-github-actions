@@ -66,40 +66,40 @@ jobs:
               echo "${row}" | base64 -d | jq -r "${1}"
             }
 
-            # Extract variable names and sanitize hyphens to underscores for shell
-            FILE_VAR=$(_jq '.file' | tr -d '$' | tr '-' '_')
-            PWD_VAR=$(_jq '.password' | tr -d '$' | tr '-' '_')
+            # Extract variable names (e.g., identity_pfx)
+            FILE_VAR_NAME=$(_jq '.file' | tr -d '$')
+            PWD_VAR_NAME=$(_jq '.password' | tr -d '$')
             ALIAS_NAME=$(_jq '.alias')
 
             echo "🔑 Processing Alias: $ALIAS_NAME"
 
-            # 2. Retrieve and Decode File Content from GSM
-            # Logic: GSM (B64 String) -> Decode -> Physical File (.bin)
-            FILE_B64=$(gcloud secrets versions access latest --secret="$FILE_VAR")
+            # 2. Fetch and Decode File Content from GSM
+            # Logic: Secret is B64 string -> Decode to binary file
+            FILE_B64=$(gcloud secrets versions access latest --secret="$FILE_VAR_NAME")
             LOCAL_FILENAME="${ALIAS_NAME}.bin"
             echo "$FILE_B64" | base64 -d > "$LOCAL_FILENAME"
-            export "$FILE_VAR"="$LOCAL_FILENAME"
+            export "$FILE_VAR_NAME"="$LOCAL_FILENAME"
 
-            # 3. Retrieve and Decode Password from GSM
-            # Logic: GSM (B64 String) -> Decode -> Plain Text Variable
-            PWD_B64=$(gcloud secrets versions access latest --secret="$PWD_VAR")
-            export "$PWD_VAR"=$(echo "$PWD_B64" | base64 -d)
+            # 3. Fetch and Decode Password from GSM
+            # Logic: Secret is B64 string -> Decode to plain text string
+            PWD_B64=$(gcloud secrets versions access latest --secret="$PWD_VAR_NAME")
+            export "$PWD_VAR_NAME"=$(echo "$PWD_B64" | base64 -d)
           done
 
-          # 4. Finalize JSON via envsubst
+          # 4. Finalize the JSON with filenames and decoded passwords
           envsubst < "$KS_JSON" > keystores_final.json
 
-          # 5. Correct 2025 Command Hierarchy for apigeecli
+          # 5. Correct 2025 Command Path (Fixes "Unknown Flag" Errors)
           KS_NAME=$(basename "$KS_JSON" .json)
           
-          # Ensure Keystore container exists
+          # Create Keystore container
           apigeecli environments keystores create \
             --name "$KS_NAME" \
             --org "${{ secrets.APIGEE_ORG }}" \
             --env "${{ env.APIGEE_ENV }}" \
             --default-token || true
 
-          # Import all aliases from the final JSON
+          # Import Aliases from the finalized JSON
           apigeecli environments keystores aliases import \
             --keystore "$KS_NAME" \
             --org "${{ secrets.APIGEE_ORG }}" \
@@ -107,7 +107,7 @@ jobs:
             --file keystores_final.json \
             --default-token
 
-          # 6. Final Cleanup
+          # 6. Cleanup sensitive files
           rm keystores_final.json *.bin 2>/dev/null || true
 
       - name: Deploy KVMs
