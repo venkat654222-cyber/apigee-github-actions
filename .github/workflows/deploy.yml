@@ -94,7 +94,6 @@ jobs:
 
           # Import aliases (uses the file path from your finalized JSON)
             apigeecli keystores aliases import \
-            --keystore "$KS_NAME" \
             --org "${{ secrets.APIGEE_ORG }}" \
             --env "${{ env.APIGEE_ENV }}" \
             --file keystores_final.json \
