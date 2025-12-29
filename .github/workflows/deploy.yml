@@ -54,50 +54,50 @@ jobs:
       - name: Sync Keystores
         run: |
           KS_JSON="configs/${{ env.APIGEE_ENV }}/keystores/keystores.json"
+          KS_NAME=$(basename "$KS_JSON" .json)
 
-          # 1. Iterate through the JSON array
+          # 1. Create the Keystore container if it doesn't exist
+          apigeecli keystores create --name "$KS_NAME" \
+            -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} --token $TOKEN || true
+
+          # 2. Iterate through the JSON array to decode secrets and import
           for row in $(jq -r '.[] | @base64' "$KS_JSON"); do
             _jq() {
               echo "${row}" | base64 -d | jq -r "${1}"
             }
 
-            # Extract placeholders (e.g., identity_pfx and identity_password)
+            # Extract variable names from JSON
             FILE_VAR_NAME=$(_jq '.file' | tr -d '$')
             PWD_VAR_NAME=$(_jq '.password' | tr -d '$')
             ALIAS_NAME=$(_jq '.alias')
 
             echo "🔑 Processing Alias: $ALIAS_NAME"
 
-            # 2. Retrieve B64 from GSM and Decode FILE to disk
-            # apigeecli needs a path to a file, not the raw data
+            # 3. Retrieve and Decode PKCS12 file from GSM
             FILE_B64=$(gcloud secrets versions access latest --secret="$FILE_VAR_NAME")
-            LOCAL_FILENAME="${ALIAS_NAME}.bin"
+            LOCAL_FILENAME="${ALIAS_NAME}.p12"
             echo "$FILE_B64" | base64 -d > "$LOCAL_FILENAME"
             
-            # Export the path so envsubst can update the JSON
-            export "$FILE_VAR_NAME"="$LOCAL_FILENAME"
-
-            # 3. Retrieve B64 from GSM and Decode PASSWORD to shell var
+            # 4. Retrieve and Decode PASSWORD from GSM
             PWD_B64=$(gcloud secrets versions access latest --secret="$PWD_VAR_NAME")
-            export "$PWD_VAR_NAME"=$(echo "$PWD_B64" | base64 -d)
+            CLEAN_PWD=$(echo "$PWD_B64" | base64 -d)
+
+            # 5. Import Alias into Apigee using apigeecli
+            # Format is set to 'pkcs12' for .p12/.pfx files
+            apigeecli keystores aliases create \
+              --name "$ALIAS_NAME" \
+              --keystore "$KS_NAME" \
+              --env ${{ env.APIGEE_ENV }} \
+              --org ${{ secrets.APIGEE_ORG }} \
+              --format pkcs12 \
+              --p12 "$LOCAL_FILENAME" \
+              --password "$CLEAN_PWD" \
+              --token $TOKEN
+
           done
 
-          # 4. Finalize the JSON (Injecting filenames and passwords)
-          envsubst < "$KS_JSON" > keystores_final.json
-
-          # 5. Import using the correct apigeecli 2025 hierarchy
-          KS_NAME=$(basename "$KS_JSON" .json)
-          
-          # Create container if missing
-          apigeecli keystores create --name "$KS_NAME" \
-            -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} --default-token || true
-
-          # Import aliases (uses the file path from your finalized JSON)
-            apigeecli keystores  --help
-
-
-          # 6. Cleanup
-          rm keystores_final.json *.bin
+          # 6. Cleanup sensitive files
+          rm -f *.p12
 
       - name: Deploy KVMs
         run: |
