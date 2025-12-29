@@ -85,7 +85,6 @@ jobs:
             # 5. Import Alias into Apigee using apigeecli
             # Format is set to 'pkcs12' for .p12/.pfx files
             apigeecli keystores aliases create \
-              --name "$ALIAS_NAME" \
               --keystore "$KS_NAME" \
               --env ${{ env.APIGEE_ENV }} \
               --org ${{ secrets.APIGEE_ORG }} \
