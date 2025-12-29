@@ -52,23 +52,7 @@ jobs:
           fi
 
 
-      - name: Sync Keystores and Aliases
-        run: |
-          KS_JSON="configs/${{ env.APIGEE_ENV }}/keystores/keystores.json"
-          TOKEN=$(gcloud auth print-access-token)
-
-          # 1. Loop through each Keystore in the JSON array
-          for ks_row in $(jq -r '.[] | @base64' "$KS_JSON"); do
-            _ks_jq() { echo "${ks_row}" | base64 -d | jq -r "${1}"; }
-            
-            KS_NAME=$(_ks_jq '.name')
-            echo "📦 Processing Keystore: $KS_NAME"
-
-            # Create Keystore container if it doesn't exist
-            apigeecli keystores create --name "$KS_NAME" \
-              -o ${{ secrets.APIGEE_ORG }} -e ${{ env.APIGEE_ENV }} --token $TOKEN || true
-
-           
+               
 
       - name: Deploy KVMs
         run: |
