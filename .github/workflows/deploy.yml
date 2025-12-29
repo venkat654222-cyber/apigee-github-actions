@@ -95,9 +95,9 @@ jobs:
             --env "${{ env.APIGEE_ENV }}" \
             --org "${{ secrets.APIGEE_ORG }}" \
             --default-token || true
-          # Use 'environments keystores aliases import'
+           # 2. Import the aliases (Uses --keystore)
           apigeecli keystores aliases import \
-            --name "$KS_NAME" \
+            --keystore "$KS_NAME" \
             --org "${{ secrets.APIGEE_ORG }}" \
             --env "${{ env.APIGEE_ENV }}" \
             --file keystores_final.json \
