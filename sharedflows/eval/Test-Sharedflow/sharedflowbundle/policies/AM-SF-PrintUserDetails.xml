@@ -14,7 +14,7 @@
   </Copy>
   <Remove>
     <Headers>
-      <Header name="h22331"/>
+      <Header name="x-client-id"/>
     </Headers>
     <QueryParams>
       <QueryParam name="q13dd3ssddww22"/>
