@@ -1,0 +1,8 @@
+[{
+    "name": "back2end-aws-server-ts",
+    "host": "aws.bacdkend.com",
+    "port": 443,
+    "isEnabled": true,
+    "sLIsEnabled": true
+  }
+]
