@@ -1,0 +1,8 @@
+{
+    "name": "BlueYonderDetails",
+    "encrypted": false,
+    "entry": [
+      { "name": "baseUrl", "value": "https://blueyonder.example.com" },
+      { "name": "timeout", "value": "35" }
+    ]
+  }

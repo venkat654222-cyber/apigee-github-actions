@@ -3,6 +3,6 @@
     "encrypted": true,
     "entry": [
       { "name": "baseUrl", "value": "https://oauth.com" },
-      { "name": "timeout", "value": "89" }
+      { "name": "timeout", "value": "89999" }
     ]
   }
