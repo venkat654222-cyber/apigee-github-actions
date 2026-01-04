@@ -1,0 +1,13 @@
+<APIProxy revision="1" name="apigee-test">
+    <DisplayName></DisplayName>
+    <Description></Description>
+    <CreatedAt>1767551439342</CreatedAt>
+    <LastModifiedAt>1767551439342</LastModifiedAt>
+    <BasePaths>/apigee-test</BasePaths>
+    <ProxyEndpoints>
+        <ProxyEndpoint>default</ProxyEndpoint>
+    </ProxyEndpoints>
+    <TargetEndpoints>
+        <TargetEndpoint>default</TargetEndpoint>
+    </TargetEndpoints>
+</APIProxy>
