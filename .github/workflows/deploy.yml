@@ -156,13 +156,14 @@ jobs:
           REV="${{ github.event.inputs.revision }}"
 
           mkdir -p proxies/$API
-          apigeecli apis revisions get \
+          apigeecli apis fetch \
             --org "${{ secrets.APIGEE_ORG }}" \
-            --api "$API" \
-            --rev "$REV" \
-            --bundle > proxies/$API/apiproxy.zip  
+            -n "$API" \
+            -v "$REV" \
+             --default-token > proxies/$API/apiproxy.zip
 
-          unzip -o proxies/$API/*.zip -d proxies/$API/apiproxy
+          # Unzip the downloaded bundle
+          unzip -o proxies/$API/apiproxy.zip -d proxies/$API/apiproxy
           ls -la proxies/$API/apiproxy
 
       - name: Commit exported API to Git
