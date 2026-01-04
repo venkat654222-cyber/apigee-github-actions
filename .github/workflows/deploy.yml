@@ -186,15 +186,16 @@ jobs:
         run: |
           API="${{ github.event.inputs.api_name }}"
 
-          apigeecli apis create bundle \
-            --name "$API" \
-            --proxy-folder "proxies/$API/apiproxy" \
-            --org "${{ secrets.APIGEE_ORG }}" \
-            --default-token
+          #apigeecli apis create bundle \
+          #  --name "$API" \
+          #  --proxy-folder "proxies/$API/apiproxy" \
+          #  --org "${{ secrets.APIGEE_ORG }}" \
+          #  --default-token
 
           apigeecli apis deploy \
             --name "$API" \
             --org "${{ secrets.APIGEE_ORG }}" \
             --env "${{ env.APIGEE_ENV }}" \
             --ovr \
+            --rev "$REV" \
             --default-token
