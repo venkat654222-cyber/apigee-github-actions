@@ -158,8 +158,8 @@ jobs:
           mkdir -p proxies/$API
           apigeecli apis export \
             --org "${{ secrets.APIGEE_ORG }}" \
-            --name "$API" \
-            --rev "$REV" \
+            -n "$API" \
+            -r "$REV" \
             --output proxies/$API
 
           unzip -o proxies/$API/*.zip -d proxies/$API/apiproxy
