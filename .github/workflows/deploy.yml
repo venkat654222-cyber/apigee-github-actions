@@ -164,7 +164,7 @@ jobs:
              
           ls -lrt
           # Unzip the downloaded bundle
-          unzip -o "${API}__${REV}.zip" -d proxies/$API/apiproxy
+          unzip -o "${API}__${REV}.zip" -d proxies/$API/
           #unzip -o proxies/$API/apiproxy.zip -d proxies/$API/apiproxy
           ls -la proxies/$API/apiproxy
 
