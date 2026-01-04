@@ -164,7 +164,8 @@ jobs:
              
           ls -lrt
           # Unzip the downloaded bundle
-          unzip -o proxies/$API/apiproxy.zip -d proxies/$API/apiproxy
+          unzip -o "${API}__${REV}.zip" -d proxies/$API/apiproxy
+          #unzip -o proxies/$API/apiproxy.zip -d proxies/$API/apiproxy
           ls -la proxies/$API/apiproxy
 
       - name: Commit exported API to Git
