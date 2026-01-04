@@ -158,7 +158,7 @@ jobs:
           mkdir -p proxies/$API
           apigeecli apis revisions get \
             --org "${{ secrets.APIGEE_ORG }}" \
-            --name "$API" \
+            --api "$API" \
             --rev "$REV" \
             --bundle > proxies/$API/apiproxy.zip  
 
