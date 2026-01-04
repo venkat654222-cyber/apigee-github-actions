@@ -156,7 +156,7 @@ jobs:
           REV="${{ github.event.inputs.revision }}"
 
           mkdir -p proxies/$API
-          apigeecli apis get \
+          apigeecli apis revisions get \
             --org "${{ secrets.APIGEE_ORG }}" \
             --name "$API" \
             --rev "$REV" \
