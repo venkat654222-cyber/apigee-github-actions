@@ -197,5 +197,5 @@ jobs:
             --org "${{ secrets.APIGEE_ORG }}" \
             --env "${{ env.APIGEE_ENV }}" \
             --ovr \
-            --rev "${REV}" \
+            --rev "${{ github.event.inputs.revision }}" \
             --default-token
