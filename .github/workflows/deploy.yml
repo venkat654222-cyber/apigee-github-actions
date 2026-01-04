@@ -179,7 +179,7 @@ jobs:
             github.event.inputs.api_name }} rev ${{
             github.event.inputs.revision }} from ${{
             github.event.inputs.source_env }}" || echo "No changes"
-          git push origin main
+          git push origin ${{ github.ref_name }}
 
       - name: Deploy API to Apigee (Manual)
         if: env.MODE == 'MANUAL'
