@@ -161,7 +161,7 @@ jobs:
             -n "$API" \
             -v "$REV" \
              --default-token \
-             --no-output > proxies/$API/apiproxy.zip
+             --file proxies/$API/apiproxy.zip
 
           # Unzip the downloaded bundle
           unzip -o proxies/$API/apiproxy.zip -d proxies/$API/apiproxy
