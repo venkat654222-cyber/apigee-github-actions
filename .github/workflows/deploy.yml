@@ -97,7 +97,7 @@ jobs:
 
       - name: Deploy Modified Shared Flows
         run: |
-          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep "^sharedflows/" | cut -d/ -f3 | sort -u || true)
+          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep "^sharedflows/" | cut -d/ -f2 | sort -u || true)
           if [ -n "$MODIFIED_SFS" ]; then
             for SF_NAME in $MODIFIED_SFS; do
               if [ -d "sharedflows/$SF_NAME/sharedflowbundle" ]; then

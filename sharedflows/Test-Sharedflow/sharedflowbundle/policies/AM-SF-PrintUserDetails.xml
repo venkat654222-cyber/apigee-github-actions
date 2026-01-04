@@ -17,7 +17,7 @@
       <Header name="x-client-id"/>
     </Headers>
     <QueryParams>
-      <QueryParam name="SharedId"/>
+      <QueryParam name="SharedId1"/>
     </QueryParams>
     <FormParams>
       <FormParam name="f1"/>
