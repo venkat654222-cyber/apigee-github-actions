@@ -97,14 +97,14 @@ jobs:
 
       - name: Deploy Modified Shared Flows
         run: |
-          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep "^sharedflows/${{ env.APIGEE_ENV }}/" | cut -d/ -f3 | sort -u || true)
+          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep "^sharedflows/" | cut -d/ -f3 | sort -u || true)
           if [ -n "$MODIFIED_SFS" ]; then
             for SF_NAME in $MODIFIED_SFS; do
-              if [ -d "sharedflows/${{ env.APIGEE_ENV }}/$SF_NAME/sharedflowbundle" ]; then
+              if [ -d "sharedflows/$SF_NAME/sharedflowbundle" ]; then
                 echo "🚀 Creating and Deploying Shared Flow: $SF_NAME"
                 apigeecli sharedflows create bundle \
                   --name "$SF_NAME" \
-                  --sf-folder "sharedflows/${{ env.APIGEE_ENV }}/$SF_NAME/sharedflowbundle" \
+                  --sf-folder "sharedflows/$SF_NAME/sharedflowbundle" \
                   --org "${{ secrets.APIGEE_ORG }}" \
                   --default-token
                 apigeecli sharedflows deploy \
