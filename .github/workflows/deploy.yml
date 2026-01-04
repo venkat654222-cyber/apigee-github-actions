@@ -97,14 +97,14 @@ jobs:
 
       - name: Deploy Modified Shared Flows
         run: |
-          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep "^sharedflows/${{ env.APIGEE_ENV }}/" | cut -d/ -f3 | sort -u || true)
+          MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep "^sharedflows/" | cut -d/ -f2 | sort -u || true)
           if [ -n "$MODIFIED_SFS" ]; then
             for SF_NAME in $MODIFIED_SFS; do
-              if [ -d "sharedflows/${{ env.APIGEE_ENV }}/$SF_NAME/sharedflowbundle" ]; then
+              if [ -d "sharedflows/$SF_NAME/sharedflowbundle" ]; then
                 echo "🚀 Creating and Deploying Shared Flow: $SF_NAME"
                 apigeecli sharedflows create bundle \
                   --name "$SF_NAME" \
-                  --sf-folder "sharedflows/${{ env.APIGEE_ENV }}/$SF_NAME/sharedflowbundle" \
+                  --sf-folder "sharedflows/$SF_NAME/sharedflowbundle" \
                   --org "${{ secrets.APIGEE_ORG }}" \
                   --default-token
                 apigeecli sharedflows deploy \
@@ -122,14 +122,14 @@ jobs:
 
       - name: Deploy Modified API Proxies
         run: |
-          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep "^proxies/${{ env.APIGEE_ENV }}/" | cut -d/ -f3 | sort -u || true)
+          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep "^proxies/" | cut -d/ -f2 | sort -u || true)
           if [ -n "$MODIFIED_PROXIES" ]; then
             for PROXY_NAME in $MODIFIED_PROXIES; do
-              if [ -d "proxies/${{ env.APIGEE_ENV }}/$PROXY_NAME/apiproxy" ]; then
+              if [ -d "proxies/$PROXY_NAME/apiproxy" ]; then
                 echo "🚀 Creating and Deploying Proxy: $PROXY_NAME"
                 apigeecli apis create bundle \
                   --name "$PROXY_NAME" \
-                  --proxy-folder "proxies/${{ env.APIGEE_ENV }}/$PROXY_NAME/apiproxy" \
+                  --proxy-folder "proxies/$PROXY_NAME/apiproxy" \
                   --org "${{ secrets.APIGEE_ORG }}" \
                   --default-token
                 apigeecli apis deploy \
