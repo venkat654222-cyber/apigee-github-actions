@@ -1,8 +1,8 @@
-<APIProxy revision="15" name="hello-world">
+<APIProxy revision="12" name="hello-world">
     <DisplayName>Hello World</DisplayName>
     <Description>An example API proxy.</Description>
-    <CreatedAt>1767549873124</CreatedAt>
-    <LastModifiedAt>1767549873124</LastModifiedAt>
+    <CreatedAt>1767545151646</CreatedAt>
+    <LastModifiedAt>1767545151646</LastModifiedAt>
     <BasePaths>/hello-world</BasePaths>
     <Policies>
         <Policy>AM-PrintUserDetails</Policy>
