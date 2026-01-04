@@ -160,9 +160,9 @@ jobs:
             --org "${{ secrets.APIGEE_ORG }}" \
             -n "$API" \
             -v "$REV" \
-             --default-token \
-             --file proxies/$API/apiproxy.zip
-
+             --default-token 
+             
+          ls -lrt
           # Unzip the downloaded bundle
           unzip -o proxies/$API/apiproxy.zip -d proxies/$API/apiproxy
           ls -la proxies/$API/apiproxy
