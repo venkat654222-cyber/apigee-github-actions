@@ -1,17 +1,16 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<APIProxy revision="4" name="hello-world">
-  <DisplayName>Hello World</DisplayName>
-  <Description>An example API proxy.</Description>
-  <CreatedAt>1766712673854</CreatedAt>
-  <LastModifiedAt>1766712673854</LastModifiedAt>
-  <BasePaths>/hello-world</BasePaths>
-  <Policies>
-    <Policy>AM-PrintUserDetails</Policy>
-  </Policies>
-  <ProxyEndpoints>
-    <ProxyEndpoint>default</ProxyEndpoint>
-  </ProxyEndpoints>
-  <TargetEndpoints>
-    <TargetEndpoint>default</TargetEndpoint>
-  </TargetEndpoints>
+<APIProxy revision="12" name="hello-world">
+    <DisplayName>Hello World</DisplayName>
+    <Description>An example API proxy.</Description>
+    <CreatedAt>1767545151646</CreatedAt>
+    <LastModifiedAt>1767545151646</LastModifiedAt>
+    <BasePaths>/hello-world</BasePaths>
+    <Policies>
+        <Policy>AM-PrintUserDetails</Policy>
+    </Policies>
+    <ProxyEndpoints>
+        <ProxyEndpoint>default</ProxyEndpoint>
+    </ProxyEndpoints>
+    <TargetEndpoints>
+        <TargetEndpoint>default</TargetEndpoint>
+    </TargetEndpoints>
 </APIProxy>

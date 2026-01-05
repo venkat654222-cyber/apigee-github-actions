@@ -1,12 +1,9 @@
-<APIProxy revision="6" name="test-world">
+<APIProxy revision="1" name="apigee-test">
     <DisplayName></DisplayName>
     <Description></Description>
-    <CreatedAt>1767539170573</CreatedAt>
-    <LastModifiedAt>1767539170573</LastModifiedAt>
-    <BasePaths>/test-world</BasePaths>
-    <Policies>
-        <Policy>AM-TestCreds</Policy>
-    </Policies>
+    <CreatedAt>1767551439342</CreatedAt>
+    <LastModifiedAt>1767551439342</LastModifiedAt>
+    <BasePaths>/apigee-test</BasePaths>
     <ProxyEndpoints>
         <ProxyEndpoint>default</ProxyEndpoint>
     </ProxyEndpoints>

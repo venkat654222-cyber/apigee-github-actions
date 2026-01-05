@@ -3,14 +3,33 @@ name: Apigee X CI/CD for KVMs, Target Servers, Shared flows and API Proxies
 on:
   push:
     branches:
-      - main
+      - test
   workflow_dispatch:
+    inputs:
+      api_name:
+        description: 'Apigee API Proxy Name (manual mode only)'
+        required: false
+        type: string
+
+      revision:
+        description: 'Apigee API Revision (manual mode only)'
+        required: false
+        type: string
+
+      source_env:
+        description: 'Source Apigee Environment (manual mode only)'
+        required: false
+        type: choice
+        options:
+          - dev
+          - test
+          - eval
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -25,12 +44,20 @@ jobs:
           workload_identity_provider: projects/1041995087153/locations/global/workloadIdentityPools/github-pool/providers/github
           service_account: apigee-deploy-sa@bamboo-zone-363116.iam.gserviceaccount.com
 
+      - name: Determine execution mode
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.api_name }}" ]]; then
+            echo "MODE=MANUAL" >> $GITHUB_ENV
+          else
+            echo "MODE=AUTO" >> $GITHUB_ENV
+          fi
+
       - name: Set Apigee Environment
         run: |
           if [[ "${{ github.ref_name }}" == "dev" ]]; then
             echo "APIGEE_ENV=dev" >> $GITHUB_ENV
           elif [[ "${{ github.ref_name }}" == "test" ]]; then
-            echo "APIGEE_ENV=test" >> $GITHUB_ENV
+            echo "APIGEE_ENV=eval" >> $GITHUB_ENV
           elif [[ "${{ github.ref_name }}" == "main" ]]; then
             echo "APIGEE_ENV=eval" >> $GITHUB_ENV
           else
@@ -41,25 +68,21 @@ jobs:
       - name: Install apigeecli
         run: |
           curl -L https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh -o install_apigeecli.sh
-          if [ -s install_apigeecli.sh ]; then
-            chmod +x install_apigeecli.sh
-            ./install_apigeecli.sh
-            echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
-            echo "✅ apigeecli installed successfully."
-          else
-            echo "❌ Error: apigeecli installer download failed."
-            exit 1
-          fi
+          chmod +x install_apigeecli.sh
+          ./install_apigeecli.sh
+          echo "$HOME/.apigeecli/bin" >> $GITHUB_PATH
 
-
-               
+# ===========================
+# AUTO MODE (existing behavior)
+# ===========================
 
       - name: Deploy KVMs
+        if: env.MODE == 'AUTO'
         run: |
-          if [ -d "configs/${{ env.APIGEE_ENV }}/kvms" ] && [ "$(ls -A configs/${{ env.APIGEE_ENV }}/kvms/*.json 2>/dev/null)" ]; then
+          if [ -d "configs/${{ env.APIGEE_ENV }}/kvms" ]; then
             for file in configs/${{ env.APIGEE_ENV }}/kvms/*.json; do
+              [ -e "$file" ] || continue
               KVM_NAME=$(basename "$file" .json)
-              echo "Processing KVM: $KVM_NAME"
               apigeecli kvms create \
                 --org "${{ secrets.APIGEE_ORG }}" \
                 --env "${{ env.APIGEE_ENV }}" \
@@ -71,76 +94,108 @@ jobs:
                 --map "$KVM_NAME" \
                 -f "$file" \
                 --default-token
-              echo "✅ KVM '$KVM_NAME' synced successfully."
             done
-          else
-            echo "ℹ️ No KVM configurations found to deploy."
           fi
 
       - name: Deploy Modified Target Servers
+        if: env.MODE == 'AUTO'
         run: |
-          MODIFIED_TS=$(git diff --name-only HEAD^ HEAD | grep "^configs/${{ env.APIGEE_ENV }}/target-servers/" | sort -u || true)
-          if [ -n "$MODIFIED_TS" ]; then
-            for file in $MODIFIED_TS; do
-              TS_NAME=$(basename "$file" .json)
-              echo "🚀 Syncing Modified Target Server: $TS_NAME"
-              apigeecli targetservers import \
-                --org "${{ secrets.APIGEE_ORG }}" \
-                --env "${{ env.APIGEE_ENV }}" \
-                -f "$file" \
-                --default-token
-              echo "✅ Target Server '$TS_NAME' deployed successfully."
-            done
-          else
-            echo "ℹ️ No Target Servers modified in this commit."
-          fi
+          MODIFIED_TS=$(git diff --name-only HEAD^ HEAD | grep "^configs/${{ env.APIGEE_ENV }}/target-servers/" || true)
+          for file in $MODIFIED_TS; do
+            apigeecli targetservers import \
+              --org "${{ secrets.APIGEE_ORG }}" \
+              --env "${{ env.APIGEE_ENV }}" \
+              -f "$file" \
+              --default-token
+          done
 
       - name: Deploy Modified Shared Flows
+        if: env.MODE == 'AUTO'
         run: |
           MODIFIED_SFS=$(git diff --name-only HEAD^ HEAD | grep "^sharedflows/" | cut -d/ -f2 | sort -u || true)
-          if [ -n "$MODIFIED_SFS" ]; then
-            for SF_NAME in $MODIFIED_SFS; do
-              if [ -d "sharedflows/$SF_NAME/sharedflowbundle" ]; then
-                echo "🚀 Creating and Deploying Shared Flow: $SF_NAME"
-                apigeecli sharedflows create bundle \
-                  --name "$SF_NAME" \
-                  --sf-folder "sharedflows/$SF_NAME/sharedflowbundle" \
-                  --org "${{ secrets.APIGEE_ORG }}" \
-                  --default-token
-                apigeecli sharedflows deploy \
-                  --name "$SF_NAME" \
-                  --org "${{ secrets.APIGEE_ORG }}" \
-                  --env "${{ env.APIGEE_ENV }}" \
-                  --ovr \
-                  --default-token
-                echo "✅ Shared Flow '$SF_NAME' deployed successfully."
-              fi
-            done
-          else
-            echo "ℹ️ No Shared Flows modified in this commit."
-          fi
+          for SF in $MODIFIED_SFS; do
+            apigeecli sharedflows create bundle \
+              --name "$SF" \
+              --sf-folder "sharedflows/$SF/sharedflowbundle" \
+              --org "${{ secrets.APIGEE_ORG }}" \
+              --default-token
+            apigeecli sharedflows deploy \
+              --name "$SF" \
+              --org "${{ secrets.APIGEE_ORG }}" \
+              --env "${{ env.APIGEE_ENV }}" \
+              --ovr \
+              --default-token
+          done
 
       - name: Deploy Modified API Proxies
+        if: env.MODE == 'AUTO'
         run: |
           MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep "^proxies/" | cut -d/ -f2 | sort -u || true)
-          if [ -n "$MODIFIED_PROXIES" ]; then
-            for PROXY_NAME in $MODIFIED_PROXIES; do
-              if [ -d "proxies/$PROXY_NAME/apiproxy" ]; then
-                echo "🚀 Creating and Deploying Proxy: $PROXY_NAME"
-                apigeecli apis create bundle \
-                  --name "$PROXY_NAME" \
-                  --proxy-folder "proxies/$PROXY_NAME/apiproxy" \
-                  --org "${{ secrets.APIGEE_ORG }}" \
-                  --default-token
-                apigeecli apis deploy \
-                  --name "$PROXY_NAME" \
-                  --org "${{ secrets.APIGEE_ORG }}" \
-                  --env "${{ env.APIGEE_ENV }}" \
-                  --ovr \
-                  --default-token
-                echo "✅ API Proxy '$PROXY_NAME' deployed successfully."
-              fi
-            done
-          else
-            echo "ℹ️ No API Proxies modified in this commit."
-          fi
+          for API in $MODIFIED_PROXIES; do
+            apigeecli apis create bundle \
+              --name "$API" \
+              --proxy-folder "proxies/$API/apiproxy" \
+              --org "${{ secrets.APIGEE_ORG }}" \
+              --default-token
+            apigeecli apis deploy \
+              --name "$API" \
+              --org "${{ secrets.APIGEE_ORG }}" \
+              --env "${{ env.APIGEE_ENV }}" \
+              --ovr \
+              --default-token
+          done
+
+# ===========================
+# MANUAL MODE (UI-driven)
+# ===========================
+
+      - name: Export API from Apigee
+        if: env.MODE == 'MANUAL'
+        run: |
+          API="${{ github.event.inputs.api_name }}"
+          REV="${{ github.event.inputs.revision }}"
+
+          mkdir -p proxies/$API
+          apigeecli apis fetch \
+            --org "${{ secrets.APIGEE_ORG }}" \
+            -n "$API" \
+            -v "$REV" \
+             --default-token 
+             
+          ls -lrt
+          # Unzip the downloaded bundle
+          unzip -o "${API}__${REV}.zip" -d proxies/$API/
+          #unzip -o proxies/$API/apiproxy.zip -d proxies/$API/apiproxy
+          ls -la proxies/$API/apiproxy
+
+      - name: Commit exported API to Git
+        if: env.MODE == 'MANUAL'
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+          git add proxies/${{ github.event.inputs.api_name }}
+          git commit -m "Export Apigee API ${{
+            github.event.inputs.api_name }} rev ${{
+            github.event.inputs.revision }} from ${{
+            github.event.inputs.source_env }}" || echo "No changes"
+          git push origin ${{ github.ref_name }}
+
+      - name: Deploy API to Apigee (Manual)
+        if: env.MODE == 'MANUAL'
+        run: |
+          API="${{ github.event.inputs.api_name }}"
+
+          #apigeecli apis create bundle \
+          #  --name "$API" \
+          #  --proxy-folder "proxies/$API/apiproxy" \
+          #  --org "${{ secrets.APIGEE_ORG }}" \
+          #  --default-token
+
+          apigeecli apis deploy \
+            --name "$API" \
+            --org "${{ secrets.APIGEE_ORG }}" \
+            --env "${{ env.APIGEE_ENV }}" \
+            --ovr \
+            --rev "${{ github.event.inputs.revision }}" \
+            --default-token
