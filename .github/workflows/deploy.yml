@@ -134,7 +134,8 @@ jobs:
       - name: Install Apigeelint
         run: |
           npm install -g apigeelint
-            - name: Apigeelint – Modified API Proxies
+
+      - name: Apigeelint – Modified API Proxies
         if: env.MODE == 'AUTO'
         run: |
           MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep "^proxies/" | cut -d/ -f2 | sort -u || true)
@@ -148,6 +149,7 @@ jobs:
             echo "Running Apigeelint for proxy: $API"
             apigeelint -s "proxies/$API/apiproxy" -f table
           done
+
     
       - name: Deploy Modified API Proxies
         if: env.MODE == 'AUTO'
