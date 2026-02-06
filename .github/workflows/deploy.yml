@@ -126,7 +126,29 @@ jobs:
               --ovr \
               --default-token
           done
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
+      - name: Install Apigeelint
+        run: |
+          npm install -g apigeelint
+            - name: Apigeelint – Modified API Proxies
+        if: env.MODE == 'AUTO'
+        run: |
+          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep "^proxies/" | cut -d/ -f2 | sort -u || true)
+
+          if [ -z "$MODIFIED_PROXIES" ]; then
+            echo "No modified proxies to lint"
+            exit 0
+          fi
+
+          for API in $MODIFIED_PROXIES; do
+            echo "Running Apigeelint for proxy: $API"
+            apigeelint -s "proxies/$API/apiproxy" -f table
+          done
+    
       - name: Deploy Modified API Proxies
         if: env.MODE == 'AUTO'
         run: |
