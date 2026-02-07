@@ -144,11 +144,26 @@ jobs:
             echo "No modified proxies to lint"
             exit 0
           fi
+           
+          # Use a pipe (|) for multiple rules, no spaces
+          CRITICAL_RULES="TD004|TD002"
 
           for API in $MODIFIED_PROXIES; do
-            echo "Running Apigeelint for proxy: $API"
-            apigeelint -s "proxies/$API/apiproxy" -f table
+            echo "Running Apigeelint for: $API"
+            LINT_OUTPUT=$(apigeelint -s "proxies/$API/apiproxy" -f table)
+            echo "$LINT_OUTPUT"
+
+            # Use grep -E for "Extended" regex to support the pipe operator
+            if echo "$LINT_OUTPUT" | grep -E "$CRITICAL_RULES" > /dev/null; then
+              echo "❌ ERROR: Critical rule violation ($CRITICAL_RULES) found in $API."
+              LINT_FAILED=1
+            fi
           done
+
+          if [ $LINT_FAILED -ne 0 ]; then
+            echo "Pipeline failed due to critical Apigeelint violations."
+            exit 1
+          fi
 
     
       - name: Deploy Modified API Proxies
