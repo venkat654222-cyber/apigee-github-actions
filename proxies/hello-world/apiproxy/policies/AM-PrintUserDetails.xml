@@ -14,7 +14,7 @@
   </Copy>
   <Remove>
     <Headers>
-      <Header name="Hello Venkateshwar Gand"/>
+      <Header name="Hello Venkateshwar Gande"/>
     </Headers>
     <QueryParams>
       <QueryParam name="Raaji333"/>
