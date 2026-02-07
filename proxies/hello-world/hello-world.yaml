@@ -5,7 +5,7 @@ info:
   description: |
     Sample API demonstrating enterprise OpenAPI standards
     for Apigee X API Platform.
-  
+  version: 1.0.0
   contact:
     name: API Platform Team
     email: apiplatform@company.com
