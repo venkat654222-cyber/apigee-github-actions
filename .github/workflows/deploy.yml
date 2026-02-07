@@ -147,7 +147,7 @@ jobs:
 
           for API in $MODIFIED_PROXIES; do
             echo "Running Apigeelint for proxy: $API"
-            apigeelint -s "proxies/$API/apiproxy" -f table -c .apigeelint.json
+            apigeelint -s "proxies/$API/apiproxy" -f table -c --profile security
           done
 
     
