@@ -1,0 +1,114 @@
+openapi: 3.0.3
+
+info:
+  title: Hello World API
+  description: |
+    Sample API demonstrating enterprise OpenAPI standards
+    for Apigee X API Platform.
+  version: 1.0.0
+  contact:
+    name: API Platform Team
+    email: apiplatform@company.com
+
+servers:
+  - url: https://api.company.com/hello-world
+    description: Production
+  - url: https://api.dev.company.com/hello-world
+    description: Development
+
+tags:
+  - name: Hello
+    description: Hello World operations
+
+paths:
+  /users/{userId}:
+    get:
+      tags:
+        - Hello
+      summary: Get user details
+      operationId: getUser
+      description: Returns user details by userId
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: Unique user identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - OAuth2: [read]
+
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.company.com/oauth/token
+          scopes:
+            read: Read access
+            write: Write access
+
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+      properties:
+        id:
+          type: string
+          example: "12345"
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+        - timestamp
+      properties:
+        code:
+          type: string
+          example: "ERR-401"
+        message:
+          type: string
+          example: "Unauthorized access"
+        timestamp:
+          type: string
+          format: date-time
+
+security:
+  - OAuth2: [read]

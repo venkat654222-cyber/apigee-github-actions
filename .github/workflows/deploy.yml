@@ -130,6 +130,31 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+      - name: Install Spectral
+        run: npm install -g @stoplight/spectral-cli
+
+      - name: OpenAPI Validation – Modified API Proxies
+        if: env.MODE == 'AUTO'
+        run: |
+          MODIFIED_PROXIES=$(git diff --name-only HEAD^ HEAD | grep "^proxies/" | cut -d/ -f2 | sort -u || true)
+
+          if [ -z "$MODIFIED_PROXIES" ]; then
+            echo "No modified proxies to validate OpenAPI"
+            exit 0
+          fi
+
+          for API in $MODIFIED_PROXIES; do
+            SPEC_FILE="proxies/$API/$API.yaml"
+
+            if [ ! -f "$SPEC_FILE" ]; then
+              echo "⚠️ OpenAPI spec not found for $API, skipping"
+              continue
+            fi
+
+            echo "Validating OpenAPI spec for: $API"
+            spectral lint "$SPEC_FILE"
+          done
+  
 
       - name: Install Apigeelint
         run: |
