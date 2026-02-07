@@ -10,6 +10,9 @@
     <Response/>
   </PostFlow>
   <HTTPTargetConnection>
+    <SSLInfo>
+      <Enabled>true</Enabled>
+    </SSLInfo>
     <URL>https://mocktarget.apigee.net/user</URL>
   </HTTPTargetConnection>
 </TargetEndpoint>

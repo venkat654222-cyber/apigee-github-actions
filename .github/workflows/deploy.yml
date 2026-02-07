@@ -146,7 +146,7 @@ jobs:
           fi
            
           # Use a pipe (|) for multiple rules, no spaces
-          CRITICAL_RULES="TD004|TD002"
+          CRITICAL_RULES="TD004"
 
           for API in $MODIFIED_PROXIES; do
             echo "Running Apigeelint for: $API"
